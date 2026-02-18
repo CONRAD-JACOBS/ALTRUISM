@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>{{ title or "Questionnaire" }}</title>
+  <style>
+    body{ margin:0; background:#0f0f12; color:#e8e8ee; font-family: Arial, sans-serif; }
+    .wrap{ max-width: 900px; margin: 0 auto; padding: 40px 22px; }
+    h1{ margin:0 0 18px 0; font-size: 38px; }
+    .card{ background:#1b1b1f; border:1px solid #2a2a31; border-radius: 14px; padding: 18px 18px; margin: 14px 0; }
+    .qtext{ font-size: 18px; margin-bottom: 10px; line-height: 1.35; }
+
+    input[type="radio"]{ transform: scale(1.1); }
+
+    .opt{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border:1px solid #333;
+      background:#121216;
+      user-select:none;
+    }
+
+    /* Binary options */
+    .row{ display:flex; flex-wrap:wrap; gap: 10px; align-items:center; }
+
+    /* Likert scales */
+    .scale{
+      display: grid;
+      grid-template-columns: repeat(var(--n), 1fr);
+      gap: 10px;
+      width: 100%;
+    }
+
+    .scale-labels{
+      display: grid;
+      grid-template-columns: repeat(var(--n), 1fr);
+      margin-top: 10px;
+      font-size: 13px;
+      color:#b0b0bd;
+    }
+
+    .scale-labels .left{ grid-column: 1; justify-self: start; }
+    .scale-labels .mid{ grid-column: var(--mid); justify-self: center; }
+    .scale-labels .right{ grid-column: var(--n); justify-self: end; }
+
+    .footer{ margin-top: 18px; display:flex; gap: 12px; align-items:center; }
+    button{ padding: 10px 16px; border-radius: 10px; border:0; cursor:pointer; font-size: 16px; }
+    .err{ color:#ff6b6b; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>{{ title or "Questionnaire" }}</h1>
+
+    <form method="POST" action="{{ submit_url }}">
+      {% for q in questions %}
+        <div class="card">
+          <div class="qtext">{{ loop.index }}. {{ q.text }}</div>
+
+          {% if q.type == "binary" %}
+            <div class="row">
+              {% set labels = q.labels or ("No","Yes") %}
+              {% for val, lbl in [(0, labels[0]), (1, labels[1])] %}
+                <label class="opt">
+                  <input type="radio" name="{{ q.id }}" value="{{ val }}" required>
+                  <span>{{ lbl }}</span>
+                </label>
+              {% endfor %}
+            </div>
+
+          {% elif q.type == "likert7" %}
+            {% set n = 7 %}
+            {% set mid = 4 %}
+            <div class="scale" style="--n: {{ n }};">
+              {% for i in range(1, n+1) %}
+                <label class="opt">
+                  <input type="radio" name="{{ q.id }}" value="{{ i }}" required>
+                  <span>{{ i }}</span>
+                </label>
+              {% endfor %}
+            </div>
+            <div class="scale-labels" style="--n: {{ n }}; --mid: {{ mid }};">
+              <div class="left">{{ q.anchors[0] if q.anchors else "" }}</div>
+              <div class="mid">{{ q.anchors[1] if q.anchors else "" }}</div>
+              <div class="right">{{ q.anchors[2] if q.anchors else "" }}</div>
+            </div>
+
+          {% elif q.type == "likert10" %}
+            {% set n = 10 %}
+            {% set mid = 5 %}
+            <div class="scale" style="--n: {{ n }};">
+              {% for i in range(1, n+1) %}
+                <label class="opt">
+                  <input type="radio" name="{{ q.id }}" value="{{ i }}" required>
+                  <span>{{ i }}</span>
+                </label>
+              {% endfor %}
+            </div>
+            <div class="scale-labels" style="--n: {{ n }}; --mid: {{ mid }};">
+              <div class="left">{{ q.anchors[0] if q.anchors else "" }}</div>
+              <div class="mid">{{ q.mid_label if q.mid_label else "Neutral" }}</div>
+              <div class="right">{{ q.anchors[1] if q.anchors else "" }}</div>
+            </div>
+
+          {% else %}
+            <div class="err">Unknown question type: {{ q.type }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+      <div class="footer">
+        <button type="submit">Continue</button>
+        {% if error %}<div class="err">{{ error }}</div>{% endif %}
+      </div>
+    </form>
+  </div>
+<script>
+  const form = document.querySelector("form");
+  const AUTO_FILL = {{ "true" if auto_fill else "false" }};
+
+  if (AUTO_FILL) {
+    const byName = {};
+    form.querySelectorAll('input[type="radio"]').forEach((el) => {
+      (byName[el.name] = byName[el.name] || []).push(el);
+    });
+    Object.keys(byName).forEach((name) => {
+      const group = byName[name];
+      if (group.some((el) => el.checked)) return;
+      const idx = Math.floor((group.length - 1) / 2);
+      group[idx].checked = true;
+    });
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const data = {};
+    new FormData(form).forEach((v, k) => {
+      data[k] = v;
+    });
+
+    const r = await fetch(form.action, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ responses: data })
+    });
+
+    const j = await r.json();
+    if (j.next_url) {
+      window.location.href = j.next_url;
+    }
+  });
+</script>
+</body>
+
+</html>

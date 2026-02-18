@@ -1,0 +1,89 @@
+
+
+GAToRS (General Attitudes Towards Robots Scale)
+
+Koverola, M., Kunnari, A., Sundvall, J., & Laakasuo, M. (2022). General attitudes towards robots scale (GAToRS): A new instrument for social surveys. International Journal of Social Robotics, 14(7), 1559-1581.
+
+Please read the following statements and answer based on how much you agree with each statement. All items are anchored from 1 to 7 (“Completely disagree”–“Completely agree”).
+
+1	I can trust persons and organizations related to development of robots
+2	Persons and organizations related to development of robots will consider the needs, thoughts and feelings of their users
+3	I can trust a robot
+4	I would feel relaxed talking with a robot.
+5	If robots had emotions, I would be able to befriend them.
+6	I would feel uneasy if I was given a job where I had to use robots.
+7	I fear that a robot would not understand my commands.
+8	Robots scare me.
+9	I would feel very nervous just being around a robot.
+10	I don’t want a robot to touch me.
+11	Robots are necessary because they can do jobs that are too hard or too dangerous for people.
+12	Robots can make life easier.
+13	Assigning routine tasks to robots lets people do more meaningful tasks.
+14	Dangerous tasks should primarily be given to robots.
+15	Robots are a good thing for society, because they help people.
+16	Robots may make us even lazier.
+17	Widespread use of robots is going to take away jobs from people.
+18	I am afraid that robots will encourage less interaction between humans.
+19	Robotics is one of the areas of technology that needs to be closely monitored.
+20	Unregulated use of robotics can lead to societal upheavals.
+
+1	 S1 – personal positive
+2	 S1 – personal positive
+3	 S1 – personal positive
+4	 S1 – personal positive
+5	 S1 – personal positive
+6	 S2 – personal negative
+7	 S2 – personal negative
+8	 S2 – personal negative
+9	 S2 – personal negative
+10	 S2 – personal negative
+11	 S3 – societal positive
+12	 S3 – societal positive
+13	 S3 – societal positive
+14	 S3 – societal positive
+15	 S3 – societal positive
+16	 S4 – societal negative
+17	 S4 – societal negative
+18	 S4 – societal negative
+19	 S4 – societal negative
+20	 S4 – societal negative
+
+IDAQ (Individual Differences in Anthropomorphism Questionnaire)
+
+Waytz, A., Cacioppo, J., & Epley, N. (2010). Who sees human? The stability and importance of individual differences in anthropomorphism. Perspectives on psychological science, 5(3), 219-232.
+
+All items are rated on a 0 (not at all) to 10 (very much) scale.
+
+idaq_number	idaq_type	idaq_item
+1		idaq_na	To what extent is the desert lethargic?
+2		idaq_na	To what extent is the average computer active?
+3		idaq		To what extent does technology-devices and machines for manufacturing, entertainment, and productive processes (e.g., cars, computers, television sets)-have intentions?
+4		idaq		To what extent does the average fish have free will? 
+5		idaq_na	To what extent is the average cloud good-looking?
+6		idaq_na	To what extent are pets useful?
+7		idaq		To what extent does the average mountain have free will? 
+8		idaq_na	To what extent is the average amphibian lethargic?
+9		idaq		To what extent does a television set experience that we then reduced to 30 items, as shown in Box Al. The emotions?
+10		idaq_na	To what extent is the average robot good-looking?
+11		idaq		To what extent does the average robot have consciousness?
+12		idaq		To what extent do cows have intentions?
+13		idaq		To what extent does a car have free will?
+14		idaq		To what extent does the ocean have consciousness?
+15		idaq_na	To what extent is the average camera lethargic?
+16		idaq_na	To what extent is a river useful? 
+17		idaq		To what extent does the average computer have a mind of its own? 
+18		idaq_na	To what extent is a tree active?
+19		idaq_na	To what extent is the average kitchen appliance useful?
+20		idaq		To what extent does a cheetah experience emotions?
+21		idaq		To what extent does the environment experience emotions? 
+22		idaq		To what extent does the average insect have a mind of its own? 
+23		idaq		To what extent does a tree have a mind of its own?
+24		idaq_na	To what extent is technology-devices and machines for manufacturing, entertainment, and productive processes (e.g., cars, computers, television sets)-durable?
+25		idaq_na	To what extent is the average cat active?
+26		idaq		To what extent does the wind have intentions?
+27		idaq_na	To what extent is the forest durable?
+28		idaq_na	To what extent is a tortoise durable?
+29		idaq		To what extent does the average reptile have consciousness? 
+30		idaq_na	To what extent is the average dog good-looking?
+
+Note:  To compute the IDAQ response score, sum items 3,4,7,9,11, 12, 13, 14, 17,20, 21, 22, 23, 26, 29. To compute IDAQ-NA, sum items 1, 2, 5, 6, 8, 10, 15, 16, 18, 19, 24, 25, 27, 28, 30. Unused items with spiritual agents are: "To what extent does a spirit (or spirits) have a mind of its own?", "To what extent does a ghost have free will?", "To what extent do supernatural beings have intentions?", "To what extent does the average spiritual agent have consciousness?", "To what extent does a god experience emotions?", "To what extent are deities durable?", "To what extent is a god useful?", "To what extent is the average supernatural being good-looking?", "To what extent is a spirit (or spirits) active?", and "To what extent is the average spiritual agent lethargic?”

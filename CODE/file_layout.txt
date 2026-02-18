@@ -1,0 +1,13 @@
+local_captcha/
+  app.py
+  config.json              # starting total, prompt, etc.
+  TARGETS/
+    *.jpg / *.png ...
+  DISTRACTORS/
+    *.jpg / *.png ...
+  templates/
+    index.html
+  static/
+    app.js
+    styles.css
+  results/                 # auto-created

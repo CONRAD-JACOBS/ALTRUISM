@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Image Task</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="prompt" id="prompt"
+        data-robot="{{ robot_name|default('') }}"
+        data-stage="{{ stage_id|default('') }}">
+        {{ prompt_text }}
+      </div>
+      <div class="stats">
+        <div id="completed">Completed: --</div>
+        <!--<div id="remaining">Remaining: --</div>-->
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="grid" id="grid" data-n="{{ grid_n }}"></div>
+
+      <div class="footer">
+        <div class="feedback" id="feedback"></div>
+        <button id="submit" class="btn">Submit</button>
+      </div>
+
+      <div class="hint">
+        Press <b>ESC</b> to finish (saves results).
+      </div>
+
+
+
+    </div>
+  </div>
+
+
+
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

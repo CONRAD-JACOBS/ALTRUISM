@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Continue</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #111;
+      color: #ddd;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      text-align: center;
+    }
+
+    .text {
+      max-width: 600px;
+      font-size: 18px;
+      line-height: 1.5;
+      margin-bottom: 40px;
+    }
+
+    button {
+      background-color: #333;
+      color: #eee;
+      border: 1px solid #555;
+      padding: 14px 28px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #444;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="text">
+      When you are ready, click the button below to continue.
+    </div>
+
+    <button onclick="continueTask()">Continue</button>
+  </div>
+
+  <script>
+    function continueTask() {
+      // server provides next_url via template or query param
+      const next = "{{ next_url | default('/') }}";
+      window.location.href = next;
+    }
+  </script>
+</body>
+</html>

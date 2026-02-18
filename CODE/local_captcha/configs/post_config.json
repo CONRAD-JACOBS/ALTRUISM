@@ -1,0 +1,8 @@
+{
+  "prompt_text": "Click on the images containing bicycles.",
+  "grid_n": 3,
+  "targets_per_captcha_min": 3,
+  "targets_per_captcha_max": 5,
+  "goal_correct": 1000,
+  "start_total_correct": 0
+}

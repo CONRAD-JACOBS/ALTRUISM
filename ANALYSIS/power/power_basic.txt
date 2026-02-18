@@ -1,0 +1,78 @@
+In the simulation (standardized predictors), β ≈ 0.20–0.30 means: 
+a 1 SD increase in empathy is associated with ~0.20–0.30 SD higher time spent (holding mentacy constant). 
+These are typical effect sizes in psychological research with standardized variables.  
+
+=================================
+SIMULATION A
+=================================
+    beta1=0.30,                     # β₁: positive effect of empathy
+    beta2=0.25,                     # β₂: positive effect of mentacy confidence
+    beta3=0.20,                     # β₃: positive interaction (key hypothesis)
+    sigma=1.0,                      # Residual standard deviation
+    cor_x1_x2=0.3,                  # Correlation between empathy and mentacy
+    seed=42
+
+=== Power for detecting the empathy × mentacy interaction (β₃) ===
+     N  power_interaction
+0  150              0.671
+1  200              0.801
+2  250              0.887
+3  300              0.941
+4  350              0.967
+
+=================================
+SIMULATION B
+=================================
+
+    beta1=0.35, beta2=0.30, beta3=0.25,
+    cor_x1_x2=0.3, sigma=1.0,
+
+=== Power for detecting the empathy × mentacy interaction (β₃) ===
+     N  power_interaction
+0   50              0.387
+1  100              0.644
+2  150              0.874
+3  200              0.936
+4  250              0.974
+5  300              0.988
+6  350              0.995
+
+=================================
+SIMULATION C
+=================================
+
+    beta1=0.35, beta2=0.30, beta3=0.25,
+    cor_x1_x2=0.4, sigma=1.0,
+
+=== Power for detecting the empathy × mentacy interaction (β₃) ===
+     N  power_interaction
+0   50              0.409
+1  125              0.791
+2  140              0.842
+3  100              0.683
+4  150              0.860
+
+=== Power for detecting the empathy × mentacy interaction (β₃) ===
+     N  power_interaction
+0   75              0.556
+1  100              0.667
+2  125              0.822
+3  150              0.858
+
+=================================
+SIMULATION D
+=================================
+    beta1=0.35, beta2=0.30, beta3=0.25,
+    cor_x1_x2=0.4, sigma=1.0,
+=== Power for detecting the empathy × mentacy interaction (β₃) ===
+     N  power_interaction
+0   70              0.553
+1   80              0.587
+2   90              0.662
+3  100              0.683
+4  110              0.741
+5  120              0.776
+6  130              0.817
+7  140              0.849
+8  150              0.858
+

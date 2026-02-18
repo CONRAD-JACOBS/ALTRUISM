@@ -1,0 +1,2 @@
+n_rows,completions_nonmissing,time_nonmissing,n_zero_completion,pct_zero_completion,"corr(time, completions)"
+2,2,2,1,50.0,1.0
