@@ -13,6 +13,7 @@ import subprocess
 BASE = Path(__file__).resolve().parent
 HYPERBASE = Path(__file__).resolve().parent.parent
 print(HYPERBASE)
+HYPERHYPERBASE = Path(__file__).resolve().parent.parent.parent
 
 TEST_AUTO_FILL = True
 TEST_BYPASS_ROBOT_COMMANDS = False
@@ -22,20 +23,20 @@ def launch_robot_stack():
         print("WARN: Robot stack launcher is macOS-only.")
         return
 
-    script = """tell application "Terminal"
+    script = f"""tell application "Terminal"
     activate
     delay 0.2
 
     -- Window 1: uq-neuro-nao Py3 server (create window by running the real command)
-    do script "clear; echo '=== UQ-NEURO-NAO Py3 (src_py3.app) ==='; cd /Users/neurorobots/Desktop/repos/uq-neuro-nao && PY3_API_PORT=5001 /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 -m src_py3.app"
-    delay 0.2
+    do script "clear; echo '=== UQ-NEURO-NAO Py3 (src_py3.app) ==='; cd {HYPERHYPERBASE}/uq-neuro-nao && PY3_API_PORT=5001 /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 -m src_py3.app"
+    delay 0.2                                                      
 
     -- Window 2: bridge_server (prep runs here; no separate PREP window)
-    do script "clear; echo '=== VOICE-LLM-CHAT BRIDGE (src.bridge_server) ==='; rm -f /Users/neurorobots/Desktop/repos/voice-llm-chat/sessions/CURRENT_SESSION.txt; echo 'Removed CURRENT_SESSION.txt (if it existed).'; cd /Users/neurorobots/Desktop/repos/voice-llm-chat && ./.venv/bin/python -m src.bridge_server"
+    do script "clear; echo '=== VOICE-LLM-CHAT BRIDGE (src.bridge_server) ==='; rm -f {HYPERHYPERBASE}/voice-llm-chat/sessions/CURRENT_SESSION.txt; echo 'Removed CURRENT_SESSION.txt (if it existed).'; cd {HYPERHYPERBASE}/voice-llm-chat && ./.venv/bin/python -m src.bridge_server"
     delay 0.2
 
     -- Window 3: Py2 worker (wait for bridge port before starting)
-    do script "clear; echo '=== UQ-NEURO-NAO Py2 (run_chat_with_bumper) ==='; echo 'Waiting for bridge_server on 127.0.0.1:5055...'; until /usr/bin/nc -z 127.0.0.1 5055; do sleep 0.2; done; echo 'Bridge is up. Launching Py2 worker.'; cd /Users/neurorobots/Desktop/repos/uq-neuro-nao && /Library/Frameworks/Python.framework/Versions/2.7/bin/python -m src_py2.main.run_chat_with_bumper"
+    do script "clear; echo '=== UQ-NEURO-NAO Py2 (run_chat_with_bumper) ==='; echo 'Waiting for bridge_server on 127.0.0.1:5055...'; until /usr/bin/nc -z 127.0.0.1 5055; do sleep 0.2; done; echo 'Bridge is up. Launching Py2 worker.'; cd {HYPERHYPERBASE}/uq-neuro-nao && /Library/Frameworks/Python.framework/Versions/2.7/bin/python -m src_py2.main.run_chat_with_bumper"
 end tell
 """
     try:
@@ -62,7 +63,7 @@ def schedule_robot_say_via_py2(text, delay_sec=5.0):
             "c.speak_n_gest_next_level([[txt, None, None, dur]], leds=True);".format(text_json),
         ]
         try:
-            subprocess.Popen(cmd, cwd="/Users/neurorobots/Desktop/repos/uq-neuro-nao")
+            subprocess.Popen(cmd, cwd=f"{HYPERHYPERBASE}/uq-neuro-nao")
         except Exception as exc:
             print("WARN: Failed to launch py2 say: {}".format(exc))
 

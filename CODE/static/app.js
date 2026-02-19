@@ -11,6 +11,14 @@ const promptEl = document.getElementById("prompt");
 const STAGE = (promptEl?.dataset?.stage || "").trim();
 const API = STAGE ? `/api/${STAGE}` : `/api`;
 const IMG = STAGE ? `/img/${STAGE}` : `/img`;
+const COMPLETED_LABEL =
+  STAGE === "captcha_post"
+    ? "You have boosted Zeek's score by"
+    : "Completed in this Session";
+
+if (completedEl && STAGE === "captcha_post") {
+  completedEl.textContent = `${COMPLETED_LABEL}: --`;
+}
 
 /*
 function setStats(totalCorrect, targetsRemaining) {
@@ -20,7 +28,7 @@ function setStats(totalCorrect, targetsRemaining) {
 */
 	
 function setStats(totalCorrect) {
-  completedEl.textContent = `Completed in this Session: ${totalCorrect}`
+  completedEl.textContent = `${COMPLETED_LABEL}: ${totalCorrect}`;
 }
 
 function clearFeedback() {
@@ -152,5 +160,4 @@ function setPrompt(robotName) {
     submitBtn.disabled = true;
   }
 })();
-
 
