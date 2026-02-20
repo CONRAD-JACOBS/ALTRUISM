@@ -1,2 +1,0 @@
-exp_sid,stage_id,participant_number,age,gender,timestamp_display,timestamp_submit,rt_sec,captcha_index,correct,prompt_text,shown_filenames_json,shown_labels_json,selected_indices_json,selected_filenames_json,targets_remaining_after,total_seen_so_far,total_correct_so_far,goal_correct,event,questionnaire_json
-909a1723135f4838b9729d5041316496,captcha_pre,3,3,male,2026-02-18T09:11:20.474,,,0,,Click on the images containing bicycles.,,,,,780,0,0,1,enter,

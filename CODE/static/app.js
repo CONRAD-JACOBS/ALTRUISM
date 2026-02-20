@@ -8,6 +8,7 @@ const submitBtn = document.getElementById("submit");
 const feedbackEl = document.getElementById("feedback");
 const completedEl = document.getElementById("completed");
 const promptEl = document.getElementById("prompt");
+const hintEl = document.getElementById("hint");
 const STAGE = (promptEl?.dataset?.stage || "").trim();
 const API = STAGE ? `/api/${STAGE}` : `/api`;
 const IMG = STAGE ? `/img/${STAGE}` : `/img`;
@@ -18,6 +19,16 @@ const COMPLETED_LABEL =
 
 if (completedEl && STAGE === "captcha_post") {
   completedEl.textContent = `${COMPLETED_LABEL}: --`;
+}
+
+if (hintEl) {
+  if (STAGE === "captcha_pre") {
+    hintEl.textContent = "";
+    hintEl.style.display = "none";
+  } else if (STAGE === "captcha_post") {
+    hintEl.textContent = "Press ESC to quit";
+    hintEl.classList.add("hint--prominent");
+  }
 }
 
 /*
@@ -129,14 +140,16 @@ async function submitCaptcha() {
 
 submitBtn.addEventListener("click", submitCaptcha);
 
-document.addEventListener("keydown", async (e) => {
-  if (e.key === "Escape") {
-    await fetch(`${API}/quit`, { method: "POST" });
-    const r2 = await fetch(`${API}/finish`, { method: "POST" });
-    const out = await r2.json();
-    if (out && out.next_url) window.location.href = out.next_url;
-  }
-});
+if (STAGE === "captcha_post") {
+  document.addEventListener("keydown", async (e) => {
+    if (e.key === "Escape") {
+      await fetch(`${API}/quit`, { method: "POST" });
+      const r2 = await fetch(`${API}/finish`, { method: "POST" });
+      const out = await r2.json();
+      if (out && out.next_url) window.location.href = out.next_url;
+    }
+  });
+}
 
 // Start
 function setPrompt(robotName) {
@@ -160,4 +173,3 @@ function setPrompt(robotName) {
     submitBtn.disabled = true;
   }
 })();
-

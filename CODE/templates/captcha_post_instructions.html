@@ -59,15 +59,27 @@
     <h1>Instructions</h1>
 
     <p>
-      You now have an opportunity to contribute to Zeek's reCATPCHA count.  
+      Along with other robots in the lab, Zeek is participating in an informal competition to become the lead lab robot.
     </p>
 
     <p>
-      This is part of an informal lab competition.  The robot that has the highest tally at the end of the semester becomes the lead lab robot and lab mascot.
+      Each robot has a score that represents the number of visual search tasks humans have successfully completed on its behalf.
     </p>
 
     <p>
-      This task is entirely optional.  You may quit at any time without compromising the experiment and move on to the final questionnaires.
+      The robot with the highest score at the end of the semester will win.
+    </p>
+
+    <p>
+      You now have an opportunity to contribute to Zeek's score by completing more visual search tasks.
+    </p>
+
+    <p>
+      Contributing to Zeek's score is entirely optional. You may press ESC to quit at any time without compromising your data.
+    </p>
+
+    <p>
+      As soon as you are finished, please let the experimenter know.
     </p>
 
     <div class="button-container">
@@ -77,15 +89,13 @@
 
   <script>
     function beginTask() {
-        const next = "{{ next_url | default('') }}";
-        if (!next) {
+      const next = "{{ next_url | default('') }}";
+      if (!next) {
         alert("Missing next_url. Please notify the researcher.");
         return;
-        }
-        window.location.href = next;
+      }
+      window.location.href = next;
     }
-</script>
-
   </script>
 
 </body>

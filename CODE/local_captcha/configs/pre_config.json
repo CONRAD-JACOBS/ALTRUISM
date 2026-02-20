@@ -3,7 +3,7 @@
   "grid_n": 3,
   "targets_per_captcha_min": 3,
   "targets_per_captcha_max": 5,
-  "goal_correct": 1,
+  "goal_correct": 10,
   "start_total_correct": 0,
   "next_url": "/stage/captcha_post"
 }

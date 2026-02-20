@@ -15,7 +15,7 @@ HYPERBASE = Path(__file__).resolve().parent.parent
 print(HYPERBASE)
 HYPERHYPERBASE = Path(__file__).resolve().parent.parent.parent
 
-TEST_AUTO_FILL = True
+TEST_AUTO_FILL = False
 TEST_BYPASS_ROBOT_COMMANDS = False
 
 def launch_robot_stack():

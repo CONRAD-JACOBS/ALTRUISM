@@ -80,3 +80,4 @@ body {
 .btn:disabled { opacity: 0.6; cursor: default; }
 
 .hint { margin-top: 10px; font-size: 13px; color:#b0b0bd; }
+.hint--prominent { font-size: 16px; font-weight: 700; color: #e8e8ee; }
