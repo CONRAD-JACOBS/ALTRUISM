@@ -11,7 +11,10 @@
     <div class="topbar">
       <div class="prompt" id="prompt"
         data-robot="{{ robot_name|default('') }}"
-        data-stage="{{ stage_id|default('') }}">
+        data-stage="{{ stage_id|default('') }}"
+        data-feedback-mode="{{ captcha_feedback_mode|default('original') }}"
+        data-feedback-right-ms="{{ captcha_feedback_right_ms|default(1000) }}"
+        data-feedback-wrong-ms="{{ captcha_feedback_wrong_ms|default(1000) }}">
         {{ prompt_text }}
       </div>
       <div class="stats">
@@ -22,6 +25,7 @@
 
     <div class="card">
       <div class="grid" id="grid" data-n="{{ grid_n }}"></div>
+      <div class="feedback-flash feedback-flash--hidden" id="feedback-flash"></div>
 
       <div class="footer">
         <div class="feedback" id="feedback"></div>

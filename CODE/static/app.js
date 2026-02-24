@@ -6,16 +6,21 @@ let selected = new Set();
 const gridEl = document.getElementById("grid");
 const submitBtn = document.getElementById("submit");
 const feedbackEl = document.getElementById("feedback");
+const feedbackFlashEl = document.getElementById("feedback-flash");
 const completedEl = document.getElementById("completed");
 const promptEl = document.getElementById("prompt");
 const hintEl = document.getElementById("hint");
 const STAGE = (promptEl?.dataset?.stage || "").trim();
+const FEEDBACK_MODE = (promptEl?.dataset?.feedbackMode || "original").trim().toLowerCase();
+const FEEDBACK_RIGHT_MS = Math.max(0, Number(promptEl?.dataset?.feedbackRightMs || 1000));
+const FEEDBACK_WRONG_MS = Math.max(0, Number(promptEl?.dataset?.feedbackWrongMs || 1000));
 const API = STAGE ? `/api/${STAGE}` : `/api`;
 const IMG = STAGE ? `/img/${STAGE}` : `/img`;
 const COMPLETED_LABEL =
   STAGE === "captcha_post"
     ? "You have boosted Zeek's score by"
     : "Completed in this Session";
+let inFeedbackTransition = false;
 
 if (completedEl && STAGE === "captcha_post") {
   completedEl.textContent = `${COMPLETED_LABEL}: --`;
@@ -39,11 +44,31 @@ function setStats(totalCorrect, targetsRemaining) {
 */
 	
 function setStats(totalCorrect) {
+  if (STAGE === "captcha_post") {
+    completedEl.innerHTML = `${COMPLETED_LABEL}: <span class="score-count">${totalCorrect}</span>`;
+    return;
+  }
   completedEl.textContent = `${COMPLETED_LABEL}: ${totalCorrect}`;
 }
 
 function clearFeedback() {
   feedbackEl.textContent = "";
+}
+
+function hideWordFlash() {
+  if (!feedbackFlashEl) return;
+  feedbackFlashEl.classList.add("feedback-flash--hidden");
+  feedbackFlashEl.classList.remove("feedback-flash--right", "feedback-flash--wrong");
+  feedbackFlashEl.textContent = "";
+  gridEl.style.visibility = "";
+}
+
+function showWordFlash(correct) {
+  if (!feedbackFlashEl) return;
+  gridEl.style.visibility = "hidden";
+  feedbackFlashEl.textContent = correct ? "RIGHT" : "WRONG";
+  feedbackFlashEl.classList.remove("feedback-flash--hidden", "feedback-flash--right", "feedback-flash--wrong");
+  feedbackFlashEl.classList.add(correct ? "feedback-flash--right" : "feedback-flash--wrong");
 }
 
 function renderGrid(tilesData) {
@@ -79,8 +104,10 @@ function renderGrid(tilesData) {
 }
 
 async function nextCaptcha() {
+  hideWordFlash();
   clearFeedback();
   submitBtn.disabled = true;
+  inFeedbackTransition = false;
 
   const r = await fetch(`${API}/next`);
   const data = await r.json();
@@ -114,6 +141,7 @@ async function nextCaptcha() {
 }
 
 async function submitCaptcha() {
+  if (inFeedbackTransition) return;
   submitBtn.disabled = true;
 
   const sel = Array.from(selected.values());
@@ -131,11 +159,18 @@ async function submitCaptcha() {
     return;
   }
 
-  feedbackEl.textContent = data.correct ? "RIGHT" : "WRONG";
+  inFeedbackTransition = true;
+  const isCorrect = Boolean(data.correct);
+  const feedbackDelayMs = isCorrect ? FEEDBACK_RIGHT_MS : FEEDBACK_WRONG_MS;
+  if (FEEDBACK_MODE === "word_flash") {
+    showWordFlash(isCorrect);
+  } else {
+    feedbackEl.textContent = data.correct ? "RIGHT" : "WRONG";
+  }
   //setStats(data.total_correct, data.targets_remaining);
   setStats(data.total_correct);
-  // brief delay to mimic CAPTCHA feedback cadence
-  setTimeout(() => nextCaptcha(), 700);
+  // feedback display cadence before loading the next captcha
+  setTimeout(() => nextCaptcha(), feedbackDelayMs);
 }
 
 submitBtn.addEventListener("click", submitCaptcha);

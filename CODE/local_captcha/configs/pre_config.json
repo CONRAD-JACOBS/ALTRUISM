@@ -5,5 +5,8 @@
   "targets_per_captcha_max": 5,
   "goal_correct": 1,
   "start_total_correct": 0,
+  "captcha_feedback_mode": "word_flash",
+  "captcha_feedback_right_ms": 1000,
+  "captcha_feedback_wrong_ms": 1600,
   "next_url": "/stage/captcha_post"
 }

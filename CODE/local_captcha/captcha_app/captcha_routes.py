@@ -12,6 +12,13 @@ def list_images(folder: Path):
                    if p.is_file() and p.suffix.lower() in SUPPORTED_EXTS])
 
 def load_cfg(config_path: Path):
+    def parse_nonnegative_int(value, default):
+        try:
+            parsed = int(value)
+        except (TypeError, ValueError):
+            return int(default)
+        return parsed if parsed >= 0 else int(default)
+
     cfg = json.loads(config_path.read_text(encoding="utf-8"))
     if "goal_correct" not in cfg:
         raise RuntimeError("Config missing required key: goal_correct")
@@ -23,6 +30,13 @@ def load_cfg(config_path: Path):
     cfg["targets_per_captcha_max"] = int(cfg.get("targets_per_captcha_max", 5))
     if cfg["targets_per_captcha_min"] > cfg["targets_per_captcha_max"]:
         cfg["targets_per_captcha_min"], cfg["targets_per_captcha_max"] = cfg["targets_per_captcha_max"], cfg["targets_per_captcha_min"]
+    feedback_mode = str(cfg.get("captcha_feedback_mode", "original")).strip().lower()
+    allowed_feedback_modes = {"original", "word_flash", "symbol_flash", "popup"}
+    if feedback_mode not in allowed_feedback_modes:
+        feedback_mode = "original"
+    cfg["captcha_feedback_mode"] = feedback_mode
+    cfg["captcha_feedback_right_ms"] = parse_nonnegative_int(cfg.get("captcha_feedback_right_ms", 1000), 1000)
+    cfg["captcha_feedback_wrong_ms"] = parse_nonnegative_int(cfg.get("captcha_feedback_wrong_ms", 1000), 1000)
     return cfg
 
 def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, config_path,
@@ -208,6 +222,9 @@ def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, conf
             prompt_text=sess["prompt_text"],
             grid_n=GRID_N,
             stage_id=stage_id,
+            captcha_feedback_mode=CFG["captcha_feedback_mode"],
+            captcha_feedback_right_ms=CFG["captcha_feedback_right_ms"],
+            captcha_feedback_wrong_ms=CFG["captcha_feedback_wrong_ms"],
         )
 
 

@@ -89,14 +89,33 @@ def process_folder(
 if __name__ == "__main__":
     # Example usage:
     # process_folder("TARGETS", "TARGETS_DEGRADED", blur_radius=1.4, downsample=1.8, noise_std=10, jpeg_quality=40)
+    blur_radius=1.6
+    downsample=1.5
+    contrast=0.8
+    brightness=1.1
+    noise_std=30
+    jpeg_quality=40
+
+    process_folder(
+    in_dir="TARGETS",
+    out_dir="TARGETS_DEGRADED",
+    blur_radius=blur_radius,
+    downsample=downsample,
+    contrast=contrast,
+    brightness=brightness,
+    noise_std=noise_std,
+    jpeg_quality=jpeg_quality,
+    overwrite=True
+    )   
+  
     process_folder(
         in_dir="DISTRACTORS",
         out_dir="DISTRACTORS_DEGRADED",
-        blur_radius=1.1,
-        downsample=1.6,
-        contrast=0.95,
-        brightness=1.0,
-        noise_std=10.0,
-        jpeg_quality=40,
+        blur_radius=blur_radius,
+        downsample=downsample,
+        contrast=contrast,
+        brightness=brightness,
+        noise_std=noise_std,
+        jpeg_quality=jpeg_quality,
         overwrite=True
-    )
+        )
