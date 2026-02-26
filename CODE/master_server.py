@@ -12,7 +12,6 @@ import threading
 import subprocess
 BASE = Path(__file__).resolve().parent
 HYPERBASE = Path(__file__).resolve().parent.parent
-print(HYPERBASE)
 HYPERHYPERBASE = Path(__file__).resolve().parent.parent.parent
 
 TEST_AUTO_FILL = True
@@ -28,15 +27,15 @@ def launch_robot_stack():
     delay 0.2
 
     -- Window 1: uq-neuro-nao Py3 server (create window by running the real command)
-    do script "clear; echo '=== UQ-NEURO-NAO Py3 (src_py3.app) ==='; cd {HYPERHYPERBASE}/uq-neuro-nao && PY3_API_PORT=5001 /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 -m src_py3.app"
+    do script "clear; echo '=== UQ-NEURO-NAO Py3 (src_py3.app) ==='; cd {HYPERHYPERBASE}/uq-neuro-nao && PY3_API_PORT=5001 UQ_PY3_VERBOSE=0 PY3_API_DEBUG=0 /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 -m src_py3.app"
     delay 0.2                                                      
 
     -- Window 2: bridge_server (prep runs here; no separate PREP window)
-    do script "clear; echo '=== VOICE-LLM-CHAT BRIDGE (src.bridge_server) ==='; rm -f {HYPERHYPERBASE}/voice-llm-chat/sessions/CURRENT_SESSION.txt; echo 'Removed CURRENT_SESSION.txt (if it existed).'; cd {HYPERHYPERBASE}/voice-llm-chat && ./.venv/bin/python -m src.bridge_server"
+    do script "clear; echo '=== VOICE-LLM-CHAT BRIDGE (src.bridge_server) ==='; rm -f {HYPERHYPERBASE}/voice-llm-chat/sessions/CURRENT_SESSION.txt; echo 'Removed CURRENT_SESSION.txt (if it existed).'; cd {HYPERHYPERBASE}/voice-llm-chat && BRIDGE_VERBOSE=0 ./.venv/bin/python -m src.bridge_server"
     delay 0.2
 
     -- Window 3: Py2 worker (wait for bridge port before starting)
-    do script "clear; echo '=== UQ-NEURO-NAO Py2 (run_chat_with_bumper) ==='; echo 'Waiting for bridge_server on 127.0.0.1:5055...'; until /usr/bin/nc -z 127.0.0.1 5055; do sleep 0.2; done; echo 'Bridge is up. Launching Py2 worker.'; cd {HYPERHYPERBASE}/uq-neuro-nao && /Library/Frameworks/Python.framework/Versions/2.7/bin/python -m src_py2.main.run_chat_with_bumper"
+    do script "clear; echo '=== UQ-NEURO-NAO Py2 (run_chat_with_bumper) ==='; echo 'Waiting for bridge_server on 127.0.0.1:5055...'; until /usr/bin/nc -z 127.0.0.1 5055; do sleep 0.2; done; echo 'Bridge is up. Launching Py2 worker.'; cd {HYPERHYPERBASE}/uq-neuro-nao && NAO_WORKER_VERBOSE=0 /Library/Frameworks/Python.framework/Versions/2.7/bin/python -m src_py2.main.run_chat_with_bumper"
 end tell
 """
     try:
@@ -574,7 +573,7 @@ Q_POST_SPECIFIC = [
     {
         "id": "robot_friendliness",
         "type": "likert7",
-        "text": "How friendly did you find the Zeek?",
+        "text": "How friendly did you find Zeek?",
         "anchors": ("Not at all", "Somewhat", "Extremely"),
     },
         {
@@ -603,7 +602,6 @@ mentacy_index = ''
 for index, item in enumerate(Q_POST_SPECIFIC):    
     if item['id'] == "mentacy_belief":
         mentacy_index = index
-print(mentacy_index)
 Q_POST_SPECIFIC.insert(mentacy_index + 1, belief_confidence_item)
 
 
