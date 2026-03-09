@@ -12,7 +12,6 @@ const promptEl = document.getElementById("prompt");
 const hintEl = document.getElementById("hint");
 const STAGE = (promptEl?.dataset?.stage || "").trim();
 const FEEDBACK_MODE = (promptEl?.dataset?.feedbackMode || "original").trim().toLowerCase();
-const FEEDBACK_RIGHT_MS = Math.max(0, Number(promptEl?.dataset?.feedbackRightMs || 1000));
 const FEEDBACK_WRONG_MS = Math.max(0, Number(promptEl?.dataset?.feedbackWrongMs || 1000));
 const API = STAGE ? `/api/${STAGE}` : `/api`;
 const IMG = STAGE ? `/img/${STAGE}` : `/img`;
@@ -48,6 +47,10 @@ function setStats(totalCorrect) {
     completedEl.innerHTML = `${COMPLETED_LABEL}: <span class="score-count">${totalCorrect}</span>`;
     return;
   }
+  if (STAGE === "captcha_pre") {
+    completedEl.innerHTML = `${COMPLETED_LABEL}: <span class="score-count">${totalCorrect}</span>`;
+    return;
+  }
   completedEl.textContent = `${COMPLETED_LABEL}: ${totalCorrect}`;
 }
 
@@ -63,12 +66,12 @@ function hideWordFlash() {
   gridEl.style.visibility = "";
 }
 
-function showWordFlash(correct) {
+function showWordFlashWrong() {
   if (!feedbackFlashEl) return;
   gridEl.style.visibility = "hidden";
-  feedbackFlashEl.textContent = correct ? "RIGHT" : "WRONG";
+  feedbackFlashEl.textContent = "WRONG";
   feedbackFlashEl.classList.remove("feedback-flash--hidden", "feedback-flash--right", "feedback-flash--wrong");
-  feedbackFlashEl.classList.add(correct ? "feedback-flash--right" : "feedback-flash--wrong");
+  feedbackFlashEl.classList.add("feedback-flash--wrong");
 }
 
 function renderGrid(tilesData) {
@@ -161,16 +164,23 @@ async function submitCaptcha() {
 
   inFeedbackTransition = true;
   const isCorrect = Boolean(data.correct);
-  const feedbackDelayMs = isCorrect ? FEEDBACK_RIGHT_MS : FEEDBACK_WRONG_MS;
-  if (FEEDBACK_MODE === "word_flash") {
-    showWordFlash(isCorrect);
-  } else {
-    feedbackEl.textContent = data.correct ? "RIGHT" : "WRONG";
-  }
   //setStats(data.total_correct, data.targets_remaining);
   setStats(data.total_correct);
+
+  if (isCorrect) {
+    hideWordFlash();
+    clearFeedback();
+    nextCaptcha();
+    return;
+  }
+
+  if (FEEDBACK_MODE === "word_flash") {
+    showWordFlashWrong();
+  } else {
+    feedbackEl.textContent = "WRONG";
+  }
   // feedback display cadence before loading the next captcha
-  setTimeout(() => nextCaptcha(), feedbackDelayMs);
+  setTimeout(() => nextCaptcha(), FEEDBACK_WRONG_MS);
 }
 
 submitBtn.addEventListener("click", submitCaptcha);

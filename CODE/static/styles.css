@@ -18,7 +18,7 @@ body {
 .topbar { display:flex; justify-content:space-between; align-items:flex-start; gap: 16px; }
 .prompt { font-size: 14px; font-weight: 400; color:#a4a4b2; }
 .stats { text-align:right; font-size: 24px; font-weight: 700; color:#e8e8ee; }
-.score-count { color: #47db47; }
+.score-count { color: #ffb020; }
 
 .card {
   position: relative;
