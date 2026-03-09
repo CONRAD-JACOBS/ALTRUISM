@@ -52,11 +52,11 @@ def process_folder(
     in_dir,
     out_dir,
     blur_radius=1.2,
-    downsample=1.6,
+    downsample=1.0,
     contrast=0.95,
     brightness=1.0,
-    noise_std=8.0,
-    jpeg_quality=45,          # lower = more artifacts; 25–60 typical
+    noise_std=2.0,
+    jpeg_quality=55,          # lower = more artifacts; 25–60 typical
     overwrite=False
 ):
     in_dir = Path(in_dir)
@@ -89,16 +89,16 @@ def process_folder(
 if __name__ == "__main__":
     # Example usage:
     # process_folder("TARGETS", "TARGETS_DEGRADED", blur_radius=1.4, downsample=1.8, noise_std=10, jpeg_quality=40)
-    blur_radius=1.6
-    downsample=1.5
-    contrast=0.8
-    brightness=1.1
-    noise_std=30
-    jpeg_quality=40
+    blur_radius=0.0          # 0 = off
+    downsample=1.0           # 1 = off; e.g., 2.0 halves width/height then upsamples
+    contrast=1.0             # <1 reduces contrast (e.g., 0.9)
+    brightness=1.2           # <1 darker (e.g., 0.95)
+    noise_std=30.0            # 0 = off; ~5–20 is moderate
+    jpeg_quality=75          # lower = more artifacts; 25–60 typical
 
     process_folder(
     in_dir="TARGETS",
-    out_dir="TARGETS_DEGRADED",
+    out_dir="../stimuli/TARGETS",
     blur_radius=blur_radius,
     downsample=downsample,
     contrast=contrast,
@@ -110,7 +110,7 @@ if __name__ == "__main__":
   
     process_folder(
         in_dir="DISTRACTORS",
-        out_dir="DISTRACTORS_DEGRADED",
+        out_dir="../stimuli/DISTRACTORS",
         blur_radius=blur_radius,
         downsample=downsample,
         contrast=contrast,

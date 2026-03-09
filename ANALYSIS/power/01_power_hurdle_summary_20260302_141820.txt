@@ -1,0 +1,31 @@
+HURDLE POWER SIMULATION SUMMARY
+timestamp: 20260302_141820
+N_values: [100, 130, 160, 190, 220, 250]
+nsim: 1000
+alpha: 0.05
+rho_emp_ment: 0.3
+logit intercept b0_logit: -0.2
+NB intercept b0_nb: 1.0
+NB dispersion alpha_nb: 0.8
+betas (EMP, MENT, INT): 0.4, 0.35, 0.2
+
+Mean engage rate and completions (averaged over sims, varies by N):
+     mean_engage_rate  mean_completed_all  mean_completed_engagers
+N                                                                 
+100          0.461650            2.236110                 4.854954
+130          0.466662            2.241462                 4.811685
+160          0.462725            2.227637                 4.823248
+190          0.461353            2.211347                 4.802211
+220          0.463091            2.233155                 4.825320
+250          0.463012            2.249388                 4.866103
+
+Power table:
+     power_logit                 power_nb                
+term         EMP EMPxMENT   MENT      EMP EMPxMENT   MENT
+N                                                        
+100        0.428    0.152  0.358    0.579    0.198  0.506
+130        0.530    0.166  0.417    0.720    0.280  0.577
+160        0.620    0.194  0.503    0.799    0.347  0.693
+190        0.667    0.224  0.559    0.858    0.375  0.772
+220        0.755    0.235  0.644    0.914    0.479  0.826
+250        0.817    0.283  0.717    0.939    0.482  0.885

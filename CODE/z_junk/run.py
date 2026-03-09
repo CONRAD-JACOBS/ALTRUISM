@@ -16,7 +16,7 @@ STAGES = [
 class Run_class:
     def __init__(self):
         self.targets_dir_prefix = "local_captcha/stimuli/TARGETS_"
-        self.distractors_dir = "local_captcha/stimuli/shared_distractors"
+        self.distractors_dir = "local_captcha/stimuli/DISTRACTORS"
         self.config_path_prefix = "local_captcha/configs"   # <- no trailing slash
         self.results_dir = "local_captcha/results"
 

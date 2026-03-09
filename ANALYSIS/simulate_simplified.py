@@ -75,12 +75,12 @@ def simulate_one(rng, participant_number):
 
 
     # -----------------------
-    # q_pre (captcha feelings)
+    # q_pre_captcha (captcha feelings)
     # -----------------------
-    q_pre_total_time = rlognorm_bounded(rng, median=8.0, sigma=0.45, lo=8.0, hi=180.0)
+    q_pre_captcha_total_time = rlognorm_bounded(rng, median=8.0, sigma=0.45, lo=8.0, hi=180.0)
 
     # difficulty: higher when ability lower / RT higher
-    q_pre_difficulty = rlikert_cont(
+    q_pre_captcha_difficulty = rlikert_cont(
         rng,
         mu=2.8 + 0.7 * (-ability) + 0.10 * (pre_mean_rt - 5.0),
         sd=0.9,
@@ -88,9 +88,9 @@ def simulate_one(rng, participant_number):
     )
 
     # fun: higher when engagement/empathy higher, lower when difficulty higher
-    q_pre_fun = rlikert_cont(
+    q_pre_captcha_fun = rlikert_cont(
         rng,
-        mu=3.2 + 0.6 * empathy_trait + 0.3 * engagement - 0.5 * (q_pre_difficulty - 3.0),
+        mu=3.2 + 0.6 * empathy_trait + 0.3 * engagement - 0.5 * (q_pre_captcha_difficulty - 3.0),
         sd=0.9,
         lo=1.0, hi=7.0
     )
@@ -162,14 +162,14 @@ def simulate_one(rng, participant_number):
     captcha_post_goal = 1000
 
     # attempts: allow true 0; driven by engagement, fun/value, difficulty
-    post_lambda = np.exp(1.0 + 0.55 * engagement + 0.20 * empathy_trait + 0.15 * (q_pre_fun - 3.0) - 0.20 * (q_pre_difficulty - 3.0))
+    post_lambda = np.exp(1.0 + 0.55 * engagement + 0.20 * empathy_trait + 0.15 * (q_pre_captcha_fun - 3.0) - 0.20 * (q_pre_captcha_difficulty - 3.0))
     post_attempts = int(np.clip(rng.poisson(lam=post_lambda), 0, 100))
 
     p_correct_post = p_logistic(0.65 * ability - 0.2)  # a little harder/ noisier
     post_completions = int(rng.binomial(post_attempts, p_correct_post)) if post_attempts > 0 else 0
 
     post_mean_rt = float(np.clip(
-        rng.lognormal(mean=np.log(5.8), sigma=0.45) * np.exp(-0.12 * speed) * (1.0 + 0.05 * (q_pre_difficulty - 3.0)),
+        rng.lognormal(mean=np.log(5.8), sigma=0.45) * np.exp(-0.12 * speed) * (1.0 + 0.05 * (q_pre_captcha_difficulty - 3.0)),
         2.0, 25.0
     ))
     post_total_time = float(np.clip(post_attempts * post_mean_rt + rng.normal(1.0, 0.8), 0.0, 3600.0))
@@ -195,9 +195,9 @@ def simulate_one(rng, participant_number):
         "captcha_post_total_time": float(post_total_time),
         "captcha_post_mean_rt": float(post_mean_rt),
 
-        "q_pre_total_time": float(q_pre_total_time),
-        "q_pre_fun": float(q_pre_fun),
-        "q_pre_difficulty": float(q_pre_difficulty),
+        "q_pre_captcha_total_time": float(q_pre_captcha_total_time),
+        "q_pre_captcha_fun": float(q_pre_captcha_fun),
+        "q_pre_captcha_difficulty": float(q_pre_captcha_difficulty),
 
         "q_pre_idaq_total_time": float(q_pre_idaq_total_time),
         "q_pre_idaq": float(q_pre_idaq),
@@ -219,7 +219,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=300)
     ap.add_argument("--seed", type=int, default=1)
-    ap.add_argument("--out", type=str, default="ANALYSIS/simulated_simplified.csv")
+    ap.add_argument("--out", type=str, default="simulated_simplified.csv")
     args = ap.parse_args()
 
     rng = np.random.default_rng(args.seed)
@@ -232,7 +232,7 @@ def main():
         "exp_sid","participant_number","age","gender",
         "captcha_pre_attempts","captcha_pre_completions","captcha_pre_goal","captcha_pre_total_time","captcha_pre_mean_rt",
         "captcha_post_attempts","captcha_post_completions","captcha_post_goal","captcha_post_total_time","captcha_post_mean_rt",
-        "q_pre_total_time","q_pre_fun","q_pre_difficulty",
+        "q_pre_captcha_total_time","q_pre_captcha_fun","q_pre_captcha_difficulty",
         "q_pre_idaq_total_time","q_pre_idaq",
         "q_pre_2050_total_time","q_pre_2050_mean_futurism_score",
         "q_post_gators_total_time","q_post_gators_pos","q_post_gators_neg",

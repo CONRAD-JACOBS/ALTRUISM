@@ -11,7 +11,7 @@ def open_browser(url):
 def main():
     app = create_app(
         targets_dir="stimuli/TARGETS_post",
-        distractors_dir="stimuli/shared_distractors",
+        distractors_dir="stimuli/DISTRACTORS",
         config_path="configs/post_config.json",
         results_dir="results/post",
         auto_open=False

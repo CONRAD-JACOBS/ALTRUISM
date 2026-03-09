@@ -1,0 +1,30 @@
+NEGATIVE BINOMIAL POWER SIMULATION SUMMARY
+timestamp: 20260302_141746
+N_values: [50, 70, 90, 110, 130, 150]
+nsim: 1000
+alpha: 0.05
+rho_emp_ment: 0.3
+NB intercept b0_nb: 1.0
+NB dispersion alpha_nb: 0.8
+betas (EMP, MENT, INT): 0.4, 0.35, 0.2
+
+Mean outcomes by N:
+     mean_completed  mean_mu_true
+N                                
+50         3.738320      3.777429
+70         3.765086      3.774421
+90         3.763422      3.770526
+110        3.796618      3.777872
+130        3.776062      3.789180
+150        3.763247      3.770274
+
+Power table (NB):
+     power_nb                
+term      EMP EMPxMENT   MENT
+N                            
+50      0.659    0.224  0.541
+70      0.816    0.308  0.676
+90      0.884    0.389  0.813
+110     0.940    0.437  0.876
+130     0.972    0.538  0.926
+150     0.990    0.595  0.961
