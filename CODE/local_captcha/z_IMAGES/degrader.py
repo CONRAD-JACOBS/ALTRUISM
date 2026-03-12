@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from PIL import Image, ImageFilter, ImageEnhance
+from PIL import Image, ImageFilter, ImageEnhance, ImageOps
 import random
 
 SUPPORTED = {".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp"}
@@ -11,6 +11,7 @@ def degrade_image(
     downsample=1.0,           # 1 = off; e.g., 2.0 halves width/height then upsamples
     contrast=1.0,             # <1 reduces contrast (e.g., 0.9)
     brightness=1.0,           # <1 darker (e.g., 0.95)
+    black_and_white=False,    # True = convert to grayscale
     noise_std=0.0,            # 0 = off; ~5–20 is moderate
     seed=None
 ):
@@ -36,6 +37,8 @@ def degrade_image(
         img = ImageEnhance.Contrast(img).enhance(contrast)
     if brightness != 1.0:
         img = ImageEnhance.Brightness(img).enhance(brightness)
+    if black_and_white:
+        img = ImageOps.grayscale(img).convert("RGB")
 
     # Noise (simple per-pixel additive noise)
     if noise_std and noise_std > 0.0:
@@ -55,6 +58,7 @@ def process_folder(
     downsample=1.0,
     contrast=0.95,
     brightness=1.0,
+    black_and_white=False,
     noise_std=2.0,
     jpeg_quality=55,          # lower = more artifacts; 25–60 typical
     overwrite=False
@@ -80,6 +84,7 @@ def process_folder(
                 downsample=downsample,
                 contrast=contrast,
                 brightness=brightness,
+                black_and_white=black_and_white,
                 noise_std=noise_std,
             )
             degraded.save(out_path, format="JPEG", quality=jpeg_quality, optimize=True)
@@ -93,6 +98,7 @@ if __name__ == "__main__":
     downsample=1.0           # 1 = off; e.g., 2.0 halves width/height then upsamples
     contrast=1.0             # <1 reduces contrast (e.g., 0.9)
     brightness=1.2           # <1 darker (e.g., 0.95)
+    black_and_white=True    # True = grayscale
     noise_std=30.0            # 0 = off; ~5–20 is moderate
     jpeg_quality=75          # lower = more artifacts; 25–60 typical
 
@@ -103,6 +109,7 @@ if __name__ == "__main__":
     downsample=downsample,
     contrast=contrast,
     brightness=brightness,
+    black_and_white=black_and_white,
     noise_std=noise_std,
     jpeg_quality=jpeg_quality,
     overwrite=True
@@ -115,6 +122,7 @@ if __name__ == "__main__":
         downsample=downsample,
         contrast=contrast,
         brightness=brightness,
+        black_and_white=black_and_white,
         noise_std=noise_std,
         jpeg_quality=jpeg_quality,
         overwrite=True

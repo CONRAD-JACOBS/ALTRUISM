@@ -738,7 +738,7 @@ register_captcha_routes(
     targets_dir=BASE / "local_captcha" / "stimuli" / "TARGETS",
     distractors_dir=BASE / "local_captcha" / "stimuli" / "DISTRACTORS",
     config_path=BASE / "local_captcha" / "configs" / "post_config.json",
-    start_mode="chooser",
+    start_mode="captcha",
     next_url="/done",
     EXP_SESSIONS=EXP_SESSIONS,   # <-- ADD THIS
 )
@@ -1104,7 +1104,11 @@ def q_post_submit():
 
 @app.route("/done")
 def done():
-    return "<h2>All done. Thank you.</h2>"
+    return (
+        "<div style='min-height:100vh;display:flex;align-items:center;justify-content:center;'>"
+        "<h2>All done. <br>Your data has been saved. <br> Please fetch the experimenter.</h2>"
+        "</div>"
+    )
 
 
 

@@ -19,6 +19,19 @@ def load_cfg(config_path: Path):
             return int(default)
         return parsed if parsed >= 0 else int(default)
 
+    def parse_bool(value, default=False):
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)):
+            return bool(value)
+        if isinstance(value, str):
+            v = value.strip().lower()
+            if v in {"1", "true", "yes", "on"}:
+                return True
+            if v in {"0", "false", "no", "off"}:
+                return False
+        return bool(default)
+
     cfg = json.loads(config_path.read_text(encoding="utf-8"))
     if "goal_correct" not in cfg:
         raise RuntimeError("Config missing required key: goal_correct")
@@ -37,6 +50,14 @@ def load_cfg(config_path: Path):
     cfg["captcha_feedback_mode"] = feedback_mode
     cfg["captcha_feedback_right_ms"] = parse_nonnegative_int(cfg.get("captcha_feedback_right_ms", 1000), 1000)
     cfg["captcha_feedback_wrong_ms"] = parse_nonnegative_int(cfg.get("captcha_feedback_wrong_ms", 1000), 1000)
+    cfg["trickclicks_enabled"] = parse_bool(cfg.get("trickclicks_enabled", False), False)
+
+    raw_counts = cfg.get("trickclicks_tile_counts_by_clicks", {})
+    parsed_counts = {1: 0, 2: 0, 3: 0, 4: 0}
+    if isinstance(raw_counts, dict):
+        for click_count in (1, 2, 3, 4):
+            parsed_counts[click_count] = parse_nonnegative_int(raw_counts.get(str(click_count), raw_counts.get(click_count, 0)), 0)
+    cfg["trickclicks_tile_counts_by_clicks"] = parsed_counts
     return cfg
 
 def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, config_path,
@@ -62,6 +83,10 @@ def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, conf
     CFG = load_cfg(Path(config_path).resolve())
     GRID_N = CFG["grid_n"]
     GRID_TILES = GRID_N * GRID_N
+
+    if CFG["trickclicks_enabled"] and sum(CFG["trickclicks_tile_counts_by_clicks"].values()) == 0:
+        # Default "extreme" profile for a 3x3 grid.
+        CFG["trickclicks_tile_counts_by_clicks"] = {1: 4, 2: 2, 3: 2, 4: 1}
 
     STAGE_STATE = {}  # exp_sid -> stage dict (captcha pools etc.)
 
@@ -174,14 +199,29 @@ def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, conf
                 [{"kind": "distractor", "filename": n} for n in distractor_names]
         random.shuffle(tiles)
 
+        if CFG["trickclicks_enabled"]:
+            required_clicks = []
+            counts = CFG["trickclicks_tile_counts_by_clicks"]
+            for click_count in (1, 2, 3, 4):
+                required_clicks.extend([click_count] * counts.get(click_count, 0))
+            if len(required_clicks) < GRID_TILES:
+                required_clicks.extend([1] * (GRID_TILES - len(required_clicks)))
+            elif len(required_clicks) > GRID_TILES:
+                required_clicks = required_clicks[:GRID_TILES]
+            random.shuffle(required_clicks)
+        else:
+            required_clicks = [1] * GRID_TILES
+
         sess["captcha_index"] += 1
         sess["last_tiles"] = tiles
-        return tiles
+        sess["last_required_clicks"] = required_clicks
+        return tiles, required_clicks
 
     # ---------- Page routes ----------
 
     @app.route(f"/stage/{stage_id}", endpoint=f"{stage_id}_stage_entry")
     def stage_entry():
+        mode = str(start_mode or "instructions").strip().lower()
         exp_sid = request.cookies.get("exp_session")
 
         if (not exp_sid) or (EXP_SESSIONS is None) or (exp_sid not in EXP_SESSIONS):
@@ -192,11 +232,22 @@ def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, conf
             if (not exp_sid) or (EXP_SESSIONS is None) or (exp_sid not in EXP_SESSIONS):
                 return redirect("/")
 
-            resp = make_response(render_template(f"{stage_id}_instructions.html",
-                                                next_url=f"/stage/{stage_id}/captcha"))
+            if mode in {"captcha", "task", "direct"}:
+                resp = make_response(redirect(f"/stage/{stage_id}/captcha"))
+                resp.set_cookie("exp_session", exp_sid, samesite="Lax")
+                return resp
+
+            resp = make_response(
+                render_template(
+                    f"{stage_id}_instructions.html",
+                    next_url=f"/stage/{stage_id}/captcha",
+                )
+            )
             resp.set_cookie("exp_session", exp_sid, samesite="Lax")
             return resp
 
+        if mode in {"captcha", "task", "direct"}:
+            return redirect(f"/stage/{stage_id}/captcha")
         return render_template(f"{stage_id}_instructions.html", next_url=f"/stage/{stage_id}/captcha")
 
     @app.route(f"/stage/{stage_id}/captcha", endpoint=f"{stage_id}_stage_captcha_page")
@@ -252,10 +303,11 @@ def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, conf
         if not sess["active"]:
             return jsonify({"done": True})
 
-        tiles = make_captcha(sess)
-        if tiles is None:
+        out = make_captcha(sess)
+        if out is None:
             sess["active"] = False
             return jsonify({"done": True})
+        tiles, required_clicks = out
         
         sess["last_display_ts"] = datetime.now().isoformat(timespec="milliseconds")
 
@@ -263,6 +315,7 @@ def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, conf
         return jsonify({
             "done": False,
             "tiles": tiles,
+            "trickclick_required_clicks": required_clicks,
             "total_correct": sess["total_correct"],
             "goal_correct": sess["goal_correct"],
             "recaptchas_remaining": remaining,

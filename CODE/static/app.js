@@ -2,6 +2,8 @@
 
 let tiles = [];
 let selected = new Set();
+let requiredClicksPerTile = [];
+let clickProgressPerTile = [];
 
 const gridEl = document.getElementById("grid");
 const submitBtn = document.getElementById("submit");
@@ -10,6 +12,7 @@ const feedbackFlashEl = document.getElementById("feedback-flash");
 const completedEl = document.getElementById("completed");
 const promptEl = document.getElementById("prompt");
 const hintEl = document.getElementById("hint");
+const saveExitBtn = document.getElementById("save-exit-trigger");
 const STAGE = (promptEl?.dataset?.stage || "").trim();
 const FEEDBACK_MODE = (promptEl?.dataset?.feedbackMode || "original").trim().toLowerCase();
 const FEEDBACK_WRONG_MS = Math.max(0, Number(promptEl?.dataset?.feedbackWrongMs || 1000));
@@ -30,8 +33,8 @@ if (hintEl) {
     hintEl.textContent = "";
     hintEl.style.display = "none";
   } else if (STAGE === "captcha_post") {
-    hintEl.textContent = "Press ESC to quit";
-    hintEl.classList.add("hint--prominent");
+    hintEl.textContent = "";
+    hintEl.style.display = "none";
   }
 }
 
@@ -74,9 +77,13 @@ function showWordFlashWrong() {
   feedbackFlashEl.classList.add("feedback-flash--wrong");
 }
 
-function renderGrid(tilesData) {
+function renderGrid(tilesData, trickclickRequiredClicks) {
   tiles = tilesData;
   selected.clear();
+  requiredClicksPerTile = Array.isArray(trickclickRequiredClicks)
+    ? trickclickRequiredClicks.map((v) => Math.max(1, Number(v) || 1))
+    : [];
+  clickProgressPerTile = new Array(tiles.length).fill(0);
   gridEl.innerHTML = "";
 
   for (let i = 0; i < tiles.length; i++) {
@@ -94,12 +101,21 @@ function renderGrid(tilesData) {
     div.addEventListener("click", () => {
       const idx = Number(div.dataset.idx);
       if (selected.has(idx)) {
+        // Asymmetric trickclicks: deselection is always single-click.
         selected.delete(idx);
         div.classList.remove("selected");
-      } else {
-        selected.add(idx);
-        div.classList.add("selected");
+        clickProgressPerTile[idx] = 0;
+        return;
       }
+
+      const required = Math.max(1, Number(requiredClicksPerTile[idx]) || 1);
+      clickProgressPerTile[idx] = (clickProgressPerTile[idx] || 0) + 1;
+      if (clickProgressPerTile[idx] < required) {
+        return;
+      }
+      clickProgressPerTile[idx] = 0;
+      selected.add(idx);
+      div.classList.add("selected");
     });
 
     gridEl.appendChild(div);
@@ -137,7 +153,7 @@ async function nextCaptcha() {
     return;
   }
 
-  renderGrid(data.tiles);
+  renderGrid(data.tiles, data.trickclick_required_clicks);
   //setStats(data.total_correct, data.targets_remaining);
   setStats(data.total_correct);
   submitBtn.disabled = false;
@@ -185,14 +201,12 @@ async function submitCaptcha() {
 
 submitBtn.addEventListener("click", submitCaptcha);
 
-if (STAGE === "captcha_post") {
-  document.addEventListener("keydown", async (e) => {
-    if (e.key === "Escape") {
-      await fetch(`${API}/quit`, { method: "POST" });
-      const r2 = await fetch(`${API}/finish`, { method: "POST" });
-      const out = await r2.json();
-      if (out && out.next_url) window.location.href = out.next_url;
-    }
+if (STAGE === "captcha_post" && saveExitBtn) {
+  saveExitBtn.addEventListener("click", async () => {
+    await fetch(`${API}/quit`, { method: "POST" });
+    const r2 = await fetch(`${API}/finish`, { method: "POST" });
+    const out = await r2.json();
+    if (out && out.next_url) window.location.href = out.next_url;
   });
 }
 

@@ -7,6 +7,33 @@
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
+  {% if stage_id == "captcha_post" %}
+    <button id="save-exit-trigger" class="save-exit-trigger" type="button">
+      Save &amp; Exit
+    </button>
+
+    <button id="competition-info-trigger" class="competition-info-trigger" type="button">
+      Click Here to Read about the Competition
+    </button>
+
+    <div id="competition-info-modal" class="competition-info-modal competition-info-modal--hidden" role="dialog" aria-modal="false" aria-labelledby="competition-info-title">
+      <div class="competition-info-modal__card">
+        <div class="competition-info-modal__header">
+          <h3 id="competition-info-title">Competition Information</h3>
+          <button id="competition-info-close" class="competition-info-modal__close" type="button" aria-label="Close">Close</button>
+        </div>
+        <div class="competition-info-modal__body">
+          <p>Along with other robots in the lab, Zerd (red) and Zork (blue), Zeek is participating in an informal competition to become the lead lab robot.</p>
+          <p>Each robot has a score that represents the number of visual search tasks humans have successfully completed on its behalf.</p>
+          <p>The robot with the highest score at the end of the semester will win.</p>
+          <p>You now have an opportunity to contribute to Zeek's score by completing more visual search tasks.</p>
+          <p>Contributing to Zeek's score is entirely optional. You may press ESC to quit at any time. Your data will be saved whether you quit or don't.</p>
+          <p>As soon as you are finished, please let the experimenter know.</p>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
   <div class="wrap">
     <div class="topbar">
       <div class="prompt" id="prompt"
@@ -35,6 +62,35 @@
       </div>
     </div>
   </div>
+  {% if stage_id == "captcha_post" %}
+    <div class="post-task-note">
+      You may add as much as you want to Zeek's score.<br><br>
+      At any time you may click Save &amp; Exit to save and quit.<br><br>
+    </div>
+  {% endif %}
+  {% if stage_id == "captcha_post" %}
+    <script>
+      (function () {
+        const trigger = document.getElementById("competition-info-trigger");
+        const modal = document.getElementById("competition-info-modal");
+        const closeBtn = document.getElementById("competition-info-close");
+        if (!trigger || !modal || !closeBtn) return;
+
+        const openModal = () => modal.classList.remove("competition-info-modal--hidden");
+        const closeModal = () => modal.classList.add("competition-info-modal--hidden");
+
+        trigger.addEventListener("click", openModal);
+        closeBtn.addEventListener("click", closeModal);
+
+        // Start at the bottom so participants immediately see the post-task note.
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: "auto" });
+          });
+        });
+      })();
+    </script>
+  {% endif %}
   <script src="/static/app.js"></script>
 </body>
 </html>

@@ -117,3 +117,117 @@ body {
 
 .hint { margin-top: 10px; font-size: 13px; color:#b0b0bd; }
 .hint--prominent { font-size: 16px; font-weight: 700; color: #e8e8ee; }
+
+.post-task-note {
+  max-width: 720px;
+  margin: 10px auto 0 auto;
+  text-align: center;
+  background: rgba(27, 27, 31, 0.95);
+  border: 1px solid #3a3a44;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #e8e8ee;
+}
+
+.competition-info-trigger {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 50;
+  background: #1b1b1f;
+  color: #e8e8ee;
+  border: 1px solid #3a3a44;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.competition-info-trigger:hover {
+  background: #24242a;
+}
+
+.save-exit-trigger {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 50;
+  background: #1b1b1f;
+  color: #e8e8ee;
+  border: 1px solid #3a3a44;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.save-exit-trigger:hover {
+  background: #24242a;
+}
+
+.competition-info-modal {
+  position: fixed;
+  top: 52px;
+  left: 14px;
+  width: min(520px, calc(100vw - 28px));
+  max-height: 70vh;
+  z-index: 60;
+}
+
+.competition-info-modal--hidden {
+  display: none;
+}
+
+.competition-info-modal__card {
+  background: rgba(23, 23, 28, 0.97);
+  border: 1px solid #3a3a44;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.competition-info-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #2f2f38;
+}
+
+.competition-info-modal__header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.competition-info-modal__close {
+  background: #2a2a31;
+  color: #e8e8ee;
+  border: 1px solid #3f3f49;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.competition-info-modal__close:hover {
+  background: #34343d;
+}
+
+.competition-info-modal__body {
+  padding: 14px;
+  line-height: 1.5;
+  font-size: 15px;
+  overflow: auto;
+  max-height: calc(70vh - 56px);
+}
+
+.competition-info-modal__body p {
+  margin: 0 0 12px 0;
+}
+
+.competition-info-modal__body p:last-child {
+  margin-bottom: 0;
+}
