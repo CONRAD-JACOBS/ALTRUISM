@@ -1,5 +1,0 @@
-model,n_obs,df_model,logLik,AIC,BIC,alpha_est
-theory_primary_only,,,,,,
-theory_plus_exploratory,,,,,,
-trivial_only,,,,,,
-theory_plus_exploratory_plus_trivial,,,,,,

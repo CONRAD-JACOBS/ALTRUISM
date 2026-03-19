@@ -7,6 +7,15 @@
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
+  {% if stage_id == "captcha_pre" %}
+    <button id="stage-advance-trigger" class="save-exit-trigger" type="button" disabled>
+      Next Stage
+    </button>
+
+    <button id="competition-info-trigger" class="competition-info-trigger" type="button">
+      Instructions
+    </button>
+  {% endif %}
   {% if stage_id == "captcha_post" %}
     <button id="save-exit-trigger" class="save-exit-trigger" type="button">
       Save &amp; Exit
@@ -16,73 +25,137 @@
       Click Here to Read about the Competition
     </button>
 
-    <div id="competition-info-modal" class="competition-info-modal competition-info-modal--hidden" role="dialog" aria-modal="false" aria-labelledby="competition-info-title">
-      <div class="competition-info-modal__card">
-        <div class="competition-info-modal__header">
-          <h3 id="competition-info-title">Competition Information</h3>
-          <button id="competition-info-close" class="competition-info-modal__close" type="button" aria-label="Close">Close</button>
-        </div>
-        <div class="competition-info-modal__body">
-          <p>Along with other robots in the lab, Zerd (red) and Zork (blue), Zeek is participating in an informal competition to become the lead lab robot.</p>
-          <p>Each robot has a score that represents the number of visual search tasks humans have successfully completed on its behalf.</p>
-          <p>The robot with the highest score at the end of the semester will win.</p>
-          <p>You now have an opportunity to contribute to Zeek's score by completing more visual search tasks.</p>
-          <p>Contributing to Zeek's score is entirely optional. You may press ESC to quit at any time. Your data will be saved whether you quit or don't.</p>
-          <p>As soon as you are finished, please let the experimenter know.</p>
-        </div>
-      </div>
-    </div>
   {% endif %}
 
-  <div class="wrap">
-    <div class="topbar">
-      <div class="prompt" id="prompt"
-        data-robot="{{ robot_name|default('') }}"
-        data-stage="{{ stage_id|default('') }}"
-        data-feedback-mode="{{ captcha_feedback_mode|default('original') }}"
-        data-feedback-wrong-ms="{{ captcha_feedback_wrong_ms|default(1000) }}">
-        {{ prompt_text }}
+  <div class="wrap{% if stage_id == 'captcha_post' and show_competition_scoreboard %} wrap--with-scoreboard{% endif %}">
+    {% if stage_id == "captcha_post" and show_competition_scoreboard %}
+      <aside class="competition-scoreboard" aria-label="Competition scores">
+        <div class="competition-scoreboard__row">
+          <span class="competition-scoreboard__name">Zerd:</span>
+          <span class="competition-scoreboard__value">{{ competition_scores.zerd }}</span>
+        </div>
+        <div class="competition-scoreboard__row">
+          <span class="competition-scoreboard__name">Zeke:</span>
+          <span class="competition-scoreboard__value" id="Zeke-score" data-base-score="{{ competition_scores.Zeke }}">{{ competition_scores.Zeke }}</span>
+        </div>
+        <div class="competition-scoreboard__row">
+          <span class="competition-scoreboard__name">Zork:</span>
+          <span class="competition-scoreboard__value">{{ competition_scores.zork }}</span>
+        </div>
+      </aside>
+    {% endif %}
+    <div class="main-column">
+      <div class="topbar">
+        <div class="prompt" id="prompt"
+          data-robot="{{ robot_name|default('') }}"
+          data-stage="{{ stage_id|default('') }}"
+          data-feedback-mode="{{ captcha_feedback_mode|default('original') }}"
+          data-feedback-wrong-ms="{{ captcha_feedback_wrong_ms|default(1000) }}">
+          {{ prompt_text }}
+        </div>
+        <div class="stats">
+          <div id="completed">Completed: --</div>
+        </div>
       </div>
-      <div class="stats">
-        <div id="completed">Completed: --</div>
-      </div>
-    </div>
 
-    <div class="card">
-      <div class="grid" id="grid" data-n="{{ grid_n }}"></div>
-      <div class="feedback-flash feedback-flash--hidden" id="feedback-flash"></div>
+      <div class="card" id="captcha-card">
+        <div class="grid" id="grid" data-n="{{ grid_n }}"></div>
+        <div class="feedback-flash feedback-flash--hidden" id="feedback-flash"></div>
 
-      <div class="footer">
-        <div class="feedback" id="feedback"></div>
-        <button id="submit" class="btn">Submit</button>
-      </div>
+        <div class="footer">
+          <div class="feedback" id="feedback"></div>
+          <button id="submit" class="btn">Submit</button>
+        </div>
 
-      <div class="hint" id="hint">
-        Press <b>ESC</b> to finish (saves results).
+        <div class="hint" id="hint">
+          Press <b>ESC</b> to finish (saves results).
+        </div>
       </div>
     </div>
   </div>
   {% if stage_id == "captcha_post" %}
     <div class="post-task-note">
-      You may add as much as you want to Zeek's score.<br><br>
-      At any time you may click Save &amp; Exit to save and quit.<br><br>
+      You may add as much as you want to Zeke's total.<br><br>
+      At any time you may click Save &amp; Exit to finish.<br><br>
+      Scroll up to hide this box.
     </div>
   {% endif %}
-  {% if stage_id == "captcha_post" %}
+  {% if stage_id == "captcha_pre" %}
+    <div class="post-task-note">
+      Scroll up to hide this box.
+    </div>
+  {% endif %}
+
+  {% if stage_id == "captcha_post" or stage_id == "captcha_pre" %}
+    <div id="competition-info-modal" class="competition-info-modal competition-info-modal--hidden" role="dialog" aria-modal="false" aria-labelledby="competition-info-title">
+      <div class="competition-info-modal__card">
+        <div class="competition-info-modal__header">
+          <h3 id="competition-info-title">
+            {% if stage_id == "captcha_pre" %}
+              Instructions
+            {% else %}
+              Competition Information
+            {% endif %}
+          </h3>
+          <button id="competition-info-close" class="competition-info-modal__close" type="button" aria-label="Close">Close</button>
+        </div>
+        <div class="competition-info-modal__body">
+          {% if stage_id == "captcha_pre" %}
+            <p>
+              To advance to the next stage you must successfully complete 10 visual recognition tasks.
+            </p>
+            <p>
+              Each grid of images includes a few images containing bicycles.
+            </p>
+            <p>
+              Click on the bicycle images to highlight them.  
+            <p>
+            <p> 
+              Click "Submit" when you have highlighted all the bicycle images. 
+            </p>
+              Once you have successfully completed 10 tasks, the "Next Stage" button will be activated.  Click it to move on.
+            </p>
+          {% else %}
+            <p>
+              Along with the other robots in the lab, Zerd (red) and Zork (blue), Zeke is participating in an informal competition to become the lead lab robot.
+            </p>
+            <p>
+              The winning robot must demonstrate its social competence by persuading humans to solve the greatest number of visual recognition tasks on its behalf this semester.
+            </p>
+
+            <p>
+              You now have an opportunity to contribute to Zeke's total by completing more visual recognition tasks.
+            </p>
+
+            <p>
+              Doing more visual recognition tasks is entirely optional. You may click Save & Exit to quit at any time.
+            </p>
+
+            <p>
+              As soon as you are finished, please let the experimenter know.
+            </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if stage_id == "captcha_post" or stage_id == "captcha_pre" %}
     <script>
       (function () {
         const trigger = document.getElementById("competition-info-trigger");
         const modal = document.getElementById("competition-info-modal");
         const closeBtn = document.getElementById("competition-info-close");
-        if (!trigger || !modal || !closeBtn) return;
 
-        const openModal = () => modal.classList.remove("competition-info-modal--hidden");
-        const closeModal = () => modal.classList.add("competition-info-modal--hidden");
+        if (trigger && modal && closeBtn) {
+          const openModal = () => modal.classList.remove("competition-info-modal--hidden");
+          const closeModal = () => modal.classList.add("competition-info-modal--hidden");
 
-        trigger.addEventListener("click", openModal);
-        closeBtn.addEventListener("click", closeModal);
+          trigger.addEventListener("click", openModal);
+          closeBtn.addEventListener("click", closeModal);
+        }
 
-        // Start at the bottom so participants immediately see the post-task note.
+        // Start at the bottom so participants immediately see the note.
         window.requestAnimationFrame(() => {
           window.requestAnimationFrame(() => {
             window.scrollTo({ top: document.body.scrollHeight, behavior: "auto" });

@@ -2,7 +2,7 @@ from datetime import datetime
 from local_captcha.captcha_app.captcha_routes import register_captcha_routes
 from pathlib import Path
 import uuid
-from flask import Flask, jsonify, request, make_response, render_template, redirect
+from flask import Flask, jsonify, request, make_response, render_template, redirect, send_from_directory
 import csv  # if you want header creation here too
 import random
 import json
@@ -14,30 +14,32 @@ BASE = Path(__file__).resolve().parent
 HYPERBASE = Path(__file__).resolve().parent.parent
 HYPERHYPERBASE = Path(__file__).resolve().parent.parent.parent
 
-TEST_AUTO_FILL = True
-TEST_BYPASS_ROBOT_COMMANDS = True
+TEST_AUTO_FILL = False
+TEST_BYPASS_ROBOT_COMMANDS = False
+# In robot stage:
+# Press Enter to stop the alert sound. Press Ctrl+Enter to advance manually.
 
 def launch_robot_stack():
     if sys.platform != "darwin":
         print("WARN: Robot stack launcher is macOS-only.")
         return
 
-    script = f"""tell application "Terminal"
+    script = """tell application "Terminal"
     activate
     delay 0.2
 
     -- Window 1: uq-neuro-nao Py3 server (create window by running the real command)
-    do script "clear; echo '=== UQ-NEURO-NAO Py3 (src_py3.app) ==='; cd {HYPERHYPERBASE}/uq-neuro-nao && PY3_API_PORT=5001 UQ_PY3_VERBOSE=0 PY3_API_DEBUG=0 /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 -m src_py3.app"
+    do script "clear; echo '=== UQ-NEURO-NAO Py3 (src_py3.app) ==='; cd {}/uq-neuro-nao && PY3_API_PORT=5001 UQ_PY3_VERBOSE=0 PY3_API_DEBUG=0 /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 -m src_py3.app"
     delay 0.2                                                      
 
     -- Window 2: bridge_server (prep runs here; no separate PREP window)
-    do script "clear; echo '=== VOICE-LLM-CHAT BRIDGE (src.bridge_server) ==='; rm -f {HYPERHYPERBASE}/voice-llm-chat/sessions/CURRENT_SESSION.txt; echo 'Removed CURRENT_SESSION.txt (if it existed).'; cd {HYPERHYPERBASE}/voice-llm-chat && BRIDGE_VERBOSE=0 ./.venv/bin/python -m src.bridge_server"
+    do script "clear; echo '=== VOICE-LLM-CHAT BRIDGE (src.bridge_server) ==='; rm -f {}/voice-llm-chat/sessions/CURRENT_SESSION.txt; echo 'Removed CURRENT_SESSION.txt (if it existed).'; cd {}/voice-llm-chat && BRIDGE_VERBOSE=0 ./.venv/bin/python -m src.bridge_server"
     delay 0.2
 
     -- Window 3: Py2 worker (wait for bridge port before starting)
-    do script "clear; echo '=== UQ-NEURO-NAO Py2 (run_chat_with_bumper) ==='; echo 'Waiting for bridge_server on 127.0.0.1:5055...'; until /usr/bin/nc -z 127.0.0.1 5055; do sleep 0.2; done; echo 'Bridge is up. Launching Py2 worker.'; cd {HYPERHYPERBASE}/uq-neuro-nao && NAO_WORKER_VERBOSE=0 /Library/Frameworks/Python.framework/Versions/2.7/bin/python -m src_py2.main.run_chat_with_bumper"
+    do script "clear; echo '=== UQ-NEURO-NAO Py2 (run_chat_with_bumper) ==='; echo 'Waiting for bridge_server on 127.0.0.1:5055...'; until /usr/bin/nc -z 127.0.0.1 5055; do sleep 0.2; done; echo 'Bridge is up. Launching Py2 worker.'; cd {}/uq-neuro-nao && NAO_WORKER_VERBOSE=0 /Library/Frameworks/Python.framework/Versions/2.7/bin/python -m src_py2.main.run_chat_with_bumper"
 end tell
-"""
+""".format(HYPERHYPERBASE, HYPERHYPERBASE, HYPERHYPERBASE, HYPERHYPERBASE)
     try:
         subprocess.Popen(["osascript", "-e", script])
     except Exception as exc:
@@ -62,7 +64,7 @@ def schedule_robot_say_via_py2(text, delay_sec=5.0):
             "c.speak_n_gest_next_level([[txt, None, None, dur]], leds=True);".format(text_json),
         ]
         try:
-            subprocess.Popen(cmd, cwd=f"{HYPERHYPERBASE}/uq-neuro-nao")
+            subprocess.Popen(cmd, cwd="{}/uq-neuro-nao".format(HYPERHYPERBASE))
         except Exception as exc:
             print("WARN: Failed to launch py2 say: {}".format(exc))
 
@@ -315,96 +317,96 @@ Q_PRE_2050 = [
         "id": "2050_art",
         "type": "likert10",
         "text": "How likely is it that by 2050 some world-class modern art museums will start collecting physical artworks (paintings, sculptures, installations, etc.) both conceived and created by robots?",
-        "anchors": ("Not at all", "Somewhat", "Extremely"),
+        "anchors": ("Not at all", "Extremely"),
     },
 
     {
         "id": "2050_other_worlds",
         "type": "likert10",
         "text": "How likely is it that by 2050 humanoid robots will visit moons or planets beyond Mars?",
-        "anchors": ("Not at all", "Somewhat", "Extremely"),
+        "anchors": ("Not at all", "Extremely"),
     },
 
         {
         "id": "2050_rubbish_collectors",
         "type": "likert10",
         "text": "How likely is it that Australian rubbish collectors will be replaced by robots by 2050?",
-        "anchors": ("Not at all", "Somewhat", "Extremely"),
+        "anchors": ("Not at all", "Extremely"),
     },
 
         {
         "id": "2050_flight_attendants",
         "type": "likert10",
         "text": "How likely is it that flight attendants on Qantas and Virgin Airlines will mostly be replaced by robots by 2050?",
-        "anchors": ("Not at all", "Somewhat", "Extremely"),
+        "anchors": ("Not at all", "Extremely"),
     },
 
             {
         "id": "2050_experiments",
         "type": "likert10",
         "text": "How likely is that by 2050 most psychology experiments in Australia will be conducted not by human students and lab assistants but by robots?",
-        "anchors": ("Not at all", "Somewhat", "Extremely"),
+        "anchors": ("Not at all", "Extremely"),
     },
 
                 {
         "id": "2050_school",
         "type": "likert10",
         "text": "How likely is it that by 2050 robots will be largely responsible for educating and disciplining children in state-run schools in Australia?",
-        "anchors": ("Not at all", "Somewhat", "Extremely"),
+        "anchors": ("Not at all", "Extremely"),
     },
           {
         "id": "2050_hiking",
         "type": "likert10",
         "text": "How likely is it that in 2050 someone hiking in a popular Australian national park would encounter a robot (drones excluded) on the hiking trail?",
-        "anchors": ("Not at all", "Somewhat", "Extremely"),
+        "anchors": ("Not at all", "Extremely"),
     },
                         {
         "id": "2050_nursing_home",
         "type": "likert10",
         "text": "How likely is it that by 2050 nursing homes in Australia will be staffed more by robots than by humans?",
-        "anchors": ("Not at all", "Somewhat", "Extremely"),
+        "anchors": ("Not at all", "Extremely"),
     },
                             {
         "id": "2050_rights",
         "type": "likert10",
         "text": "How likely is it that by 2050 robots will have certain legal rights in Australia?",
-        "anchors": ("Not at all", "Somewhat", "Extremely"),
+        "anchors": ("Not at all", "Extremely"),
     },
                                 {
         "id": "2050_neurosurgery",
         "type": "likert10",
         "text": "How likely is it that by 2050 robots will perform neurosurgery without human invervention?",
-        "anchors": ("Not at all", "Somewhat", "Extremely"),
+        "anchors": ("Not at all", "Extremely"),
     },
                                     {
         "id": "2050_crime",
         "type": "likert10",
         "text": "How likely is it that by 2050 at least one robot will have been convicted of a crime in Australia?",
-        "anchors": ("Not at all", "Somewhat", "Extremely"),
+        "anchors": ("Not at all", "Extremely"),
     },
                                         {
         "id": "2050_sports",
         "type": "likert10",
         "text": "How likely is it that by 2050 humanoid robots will be competitive with humans in team sports, such as football and rugby?",
-        "anchors": ("Not at all", "Somewhat", "Extremely"),
+        "anchors": ("Not at all", "Extremely"),
     },
                                           {
         "id": "2050_mannequins",
         "type": "likert10",
         "text": "How likely is it that by 2050 most mannequins in Australian clothing stores will be intelligent social robots?",
-        "anchors": ("Not at all", "Somewhat", "Extremely"),
+        "anchors": ("Not at all", "Extremely"),
     },
                                                 {
         "id": "2050_police",
         "type": "likert10",
         "text": "How likely is it that by 2050 police robots will be responsible for the majority of arrests made in Australia?",
-        "anchors": ("Not at all", "Somewhat", "Extremely"),
+        "anchors": ("Not at all", "Extremely"),
     },
                                                 {
         "id": "2050_shelters",
         "type": "likert10",
         "text": "How likely is it that by 2050 there will be shelters in Australia for homeless robots?",
-        "anchors": ("Not at all", "Somewhat", "Extremely"),
+        "anchors": ("Not at all", "Extremely"),
     }
 ]
 
@@ -561,31 +563,31 @@ Q_POST_SPECIFIC = [
     {
         "id": "robot_likeability",
         "type": "likert7",
-        "text": "How likeable was Zeek?",
+        "text": "How likeable was Zeke?",
         "anchors": ("Not at all", "Somewhat", "Extremely"),
     },
     {
         "id": "robot_empathy",
         "type": "likert7",
-        "text": "How much empathy did you feel for Zeek?",
+        "text": "How much empathy did you feel for Zeke?",
         "anchors": ("None", "Some", "A lot"),
     },
     {
         "id": "robot_friendliness",
         "type": "likert7",
-        "text": "How friendly did you find Zeek?",
+        "text": "How friendly did you find Zeke?",
         "anchors": ("Not at all", "Somewhat", "Extremely"),
     },
         {
         "id": "conversation_interestingness",
         "type": "likert7",
-        "text": "How interesting did you find your conversation with Zeek?",
+        "text": "How interesting did you find your conversation with Zeke?",
         "anchors": ("Not at all", "Somewhat", "Extremely"),
     },
         {
         "id": "mentacy_belief",
         "type": "binary",
-        "text": "Based on what you observed today, do you believe Zeek has a mind?",
+        "text": "Based on what you observed today, do you believe Zeke has a mind?",
         "labels": ("No", "Yes"),
     }     
 ]
@@ -616,15 +618,15 @@ EXP_SESSIONS = {}  # exp_sid -> dict with participant, csv_path, jsonl_path, etc
 import uuid
 from datetime import datetime
 
-def create_new_experiment_session(*, participant_number: int, age: int, gender: str, results_dir):
+def create_new_experiment_session(participant_number, age, gender, results_dir):
     exp_sid = uuid.uuid4().hex
     started = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     results_dir = Path(results_dir)
     results_dir.mkdir(parents=True, exist_ok=True)
 
-    csv_path = results_dir / f"P{participant_number:03d}_{started}_{exp_sid[:8]}.csv"
-    jsonl_path = results_dir / f"P{participant_number:03d}_{started}_{exp_sid[:8]}.jsonl"
+    csv_path = results_dir / "P{:03d}_{}_{}.csv".format(participant_number, started, exp_sid[:8])
+    jsonl_path = results_dir / "P{:03d}_{}_{}.jsonl".format(participant_number, started, exp_sid[:8])
 
     if not csv_path.exists():
             with open(csv_path, "w", newline="", encoding="utf-8") as f:
@@ -665,7 +667,7 @@ def create_new_experiment_session(*, participant_number: int, age: int, gender: 
     return exp_sid, EXP_SESSIONS[exp_sid]
 
 
-def get_or_create_experiment_session(participant_number: int, age: int, gender: str, results_dir: Path):
+def get_or_create_experiment_session(participant_number, age, gender, results_dir):
     exp_sid = request.cookies.get("exp_session")
     if exp_sid and exp_sid in EXP_SESSIONS:
         return exp_sid, EXP_SESSIONS[exp_sid]
@@ -674,8 +676,8 @@ def get_or_create_experiment_session(participant_number: int, age: int, gender: 
     started = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     results_dir.mkdir(parents=True, exist_ok=True)
-    jsonl_path = results_dir / f"P{participant_number:03d}_{started}_{exp_sid[:8]}.jsonl"
-    csv_path = results_dir / f"P{participant_number:03d}_{started}_{exp_sid[:8]}.csv"
+    jsonl_path = results_dir / "P{:03d}_{}_{}.jsonl".format(participant_number, started, exp_sid[:8])
+    csv_path = results_dir / "P{:03d}_{}_{}.csv".format(participant_number, started, exp_sid[:8])
 
     if not csv_path.exists():
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
@@ -727,7 +729,7 @@ register_captcha_routes(
     targets_dir=BASE / "local_captcha" / "stimuli" / "TARGETS",
     distractors_dir=BASE / "local_captcha" / "stimuli" / "DISTRACTORS",
     config_path=BASE / "local_captcha" / "configs" / "pre_config.json",
-    start_mode="chooser",
+    start_mode="captcha",
     next_url="/stage/q_pre_captcha",
     EXP_SESSIONS=EXP_SESSIONS,   # <-- ADD THIS
 )
@@ -913,7 +915,7 @@ def q_pre_2050_page():
     if "q_pre_captcha_robot_test" not in exp:
         exp["q_pre_captcha_robot_test"] = True
         if robot_commands_enabled():
-            schedule_robot_say_via_py2("Oh, hey, did the experiment start already?", delay_sec=12.5)
+            schedule_robot_say_via_py2("Oh, hey, did the experiment start already?", delay_sec=22)
 
     return render_template(
         "questionnaire.html",
@@ -970,7 +972,17 @@ def q_pre_2050_submit():
 def robot_stage():
     if TEST_BYPASS_ROBOT_COMMANDS:
         return redirect("/stage/q_post_gators")
-    return render_template("robot_stage.html")
+    notification_path = BASE / "audio" / "notification.mp3"
+    notification_url = None
+    if notification_path.exists():
+        notification_url = "/audio/notification.mp3"
+    else:
+        print("WARN: Optional robot-stage notification audio missing: {}".format(notification_path))
+    return render_template("robot_stage.html", notification_url=notification_url)
+
+@app.route("/audio/<path:filename>")
+def serve_audio(filename):
+    return send_from_directory(BASE / "audio", filename)
 
 @app.route("/api/robot/finish", methods=["POST"])
 def robot_finish():

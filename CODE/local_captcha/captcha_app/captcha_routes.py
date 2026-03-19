@@ -51,6 +51,11 @@ def load_cfg(config_path: Path):
     cfg["captcha_feedback_right_ms"] = parse_nonnegative_int(cfg.get("captcha_feedback_right_ms", 1000), 1000)
     cfg["captcha_feedback_wrong_ms"] = parse_nonnegative_int(cfg.get("captcha_feedback_wrong_ms", 1000), 1000)
     cfg["trickclicks_enabled"] = parse_bool(cfg.get("trickclicks_enabled", False), False)
+    cfg["show_competition_scoreboard"] = parse_bool(cfg.get("show_competition_scoreboard", False), False)
+    cfg["competition_scores"] = cfg.get(
+        "competition_scores",
+        {"zerd": 361, "Zeke": 233, "zork": 218},
+    )
 
     raw_counts = cfg.get("trickclicks_tile_counts_by_clicks", {})
     parsed_counts = {1: 0, 2: 0, 3: 0, 4: 0}
@@ -276,6 +281,8 @@ def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, conf
             captcha_feedback_mode=CFG["captcha_feedback_mode"],
             captcha_feedback_right_ms=CFG["captcha_feedback_right_ms"],
             captcha_feedback_wrong_ms=CFG["captcha_feedback_wrong_ms"],
+            show_competition_scoreboard=CFG["show_competition_scoreboard"],
+            competition_scores=CFG["competition_scores"],
         )
 
 

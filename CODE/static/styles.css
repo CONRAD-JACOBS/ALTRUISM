@@ -15,10 +15,57 @@ body {
 
 /* CHANGING THE FIRST .wrap padding TO MOVE CAPTCHA DOWN FROM TOP */
 .wrap { max-width: 720px; margin: 24px auto; padding: 150px 16px; }
+.wrap--with-scoreboard {
+  max-width: 980px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+}
+.main-column {
+  flex: 0 1 720px;
+}
 .topbar { display:flex; justify-content:space-between; align-items:flex-start; gap: 16px; }
 .prompt { font-size: 14px; font-weight: 400; color:#a4a4b2; }
 .stats { text-align:right; font-size: 24px; font-weight: 700; color:#e8e8ee; }
 .score-count { color: #ffb020; }
+
+.competition-scoreboard {
+  position: fixed;
+  left: 8px;
+  top: 50%;
+  width: 84px;
+  transform: translateY(-8%);
+  background: rgba(27, 27, 31, 0.95);
+  border: 1px solid #3a3a44;
+  border-radius: 10px;
+  padding: 10px 8px;
+  color: #e8e8ee;
+  z-index: 25;
+}
+
+.competition-scoreboard__row {
+  display: flex;
+  justify-content: flex-start;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.competition-scoreboard__row + .competition-scoreboard__row {
+  margin-top: 2px;
+}
+
+.competition-scoreboard__name {
+  color: #bfc2cf;
+}
+
+.competition-scoreboard__value {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
 
 .card {
   position: relative;
@@ -28,6 +75,12 @@ body {
   border-radius: 14px;
   padding: 14px;
   box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+
+.card--inactive {
+  opacity: 0.38;
+  filter: grayscale(1);
+  pointer-events: none;
 }
 
 .grid {
@@ -167,6 +220,26 @@ body {
   background: #24242a;
 }
 
+.save-exit-trigger:disabled {
+  background: #17171b;
+  border-color: #2a2a31;
+  color: #747480;
+  cursor: default;
+}
+
+/* Highlight state for the Next Stage / Save & Exit trigger when it becomes active */
+.save-exit-trigger--active {
+  background: linear-gradient(90deg, #ffdc6a, #ffb020);
+  color: #1b1b1b;
+  border-color: #ffb020;
+  box-shadow: 0 6px 20px rgba(255,176,32,0.35), 0 0 24px rgba(255,176,32,0.35) inset;
+  transform: translateY(-1px);
+}
+
+.save-exit-trigger--active:hover {
+  filter: brightness(1.05);
+}
+
 .competition-info-modal {
   position: fixed;
   top: 52px;
@@ -230,4 +303,19 @@ body {
 
 .competition-info-modal__body p:last-child {
   margin-bottom: 0;
+}
+
+@media (max-width: 900px) {
+  .wrap--with-scoreboard {
+    flex-direction: column;
+    max-width: 720px;
+    gap: 12px;
+  }
+
+  .competition-scoreboard {
+    position: static;
+    width: 100%;
+    transform: none;
+    margin-top: 0;
+  }
 }

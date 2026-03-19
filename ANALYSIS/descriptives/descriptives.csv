@@ -1,10 +1,10 @@
 TOPLINE
 n_rows,completions_nonmissing,time_nonmissing,n_zero_completion,pct_zero_completion,"corr(time, completions)"
-300,300,300,83,27.666666666666668,0.6950540063024897
+4,4,4,2,50.0,0.9300583976587692
 
 MISSINGNESS_TABLE
 column,n_missing,prop_missing
-captcha_post_mean_rt,33,0.11
+captcha_post_mean_rt,2,0.5
 q_pre_captcha_total_time,0,0.0
 q_post_specific_mentacy_belief_scale,0,0.0
 q_post_specific_total_time,0,0.0

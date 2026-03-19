@@ -10,9 +10,12 @@ const submitBtn = document.getElementById("submit");
 const feedbackEl = document.getElementById("feedback");
 const feedbackFlashEl = document.getElementById("feedback-flash");
 const completedEl = document.getElementById("completed");
+const ZekeScoreEl = document.getElementById("Zeke-score");
+const captchaCardEl = document.getElementById("captcha-card");
 const promptEl = document.getElementById("prompt");
 const hintEl = document.getElementById("hint");
 const saveExitBtn = document.getElementById("save-exit-trigger");
+const stageAdvanceBtn = document.getElementById("stage-advance-trigger");
 const STAGE = (promptEl?.dataset?.stage || "").trim();
 const FEEDBACK_MODE = (promptEl?.dataset?.feedbackMode || "original").trim().toLowerCase();
 const FEEDBACK_WRONG_MS = Math.max(0, Number(promptEl?.dataset?.feedbackWrongMs || 1000));
@@ -20,9 +23,11 @@ const API = STAGE ? `/api/${STAGE}` : `/api`;
 const IMG = STAGE ? `/img/${STAGE}` : `/img`;
 const COMPLETED_LABEL =
   STAGE === "captcha_post"
-    ? "You have boosted Zeek's score by"
+    ? "You have boosted Zeke's total by"
     : "Completed in this Session";
 let inFeedbackTransition = false;
+let stageGoal = null;
+let preStageLocked = false;
 
 if (completedEl && STAGE === "captcha_post") {
   completedEl.textContent = `${COMPLETED_LABEL}: --`;
@@ -48,6 +53,10 @@ function setStats(totalCorrect, targetsRemaining) {
 function setStats(totalCorrect) {
   if (STAGE === "captcha_post") {
     completedEl.innerHTML = `${COMPLETED_LABEL}: <span class="score-count">${totalCorrect}</span>`;
+    if (ZekeScoreEl) {
+      const baseScore = Number(ZekeScoreEl.dataset.baseScore || 0);
+      ZekeScoreEl.textContent = String(baseScore + totalCorrect);
+    }
     return;
   }
   if (STAGE === "captcha_pre") {
@@ -55,6 +64,25 @@ function setStats(totalCorrect) {
     return;
   }
   completedEl.textContent = `${COMPLETED_LABEL}: ${totalCorrect}`;
+}
+
+function updatePreStageLock(totalCorrect, goalCorrect) {
+  if (STAGE !== "captcha_pre") return false;
+  const resolvedGoal = Number(goalCorrect);
+  if (!Number.isFinite(resolvedGoal) || resolvedGoal <= 0) return false;
+
+  const shouldLock = Number(totalCorrect) >= resolvedGoal;
+  preStageLocked = shouldLock;
+
+  if (stageAdvanceBtn) {
+    stageAdvanceBtn.disabled = !shouldLock;
+    stageAdvanceBtn.classList.toggle("save-exit-trigger--active", shouldLock);
+  }
+  if (captchaCardEl) {
+    captchaCardEl.classList.toggle("card--inactive", shouldLock);
+  }
+
+  return shouldLock;
 }
 
 function clearFeedback() {
@@ -123,6 +151,7 @@ function renderGrid(tilesData, trickclickRequiredClicks) {
 }
 
 async function nextCaptcha() {
+  if (preStageLocked) return;
   hideWordFlash();
   clearFeedback();
   submitBtn.disabled = true;
@@ -156,11 +185,13 @@ async function nextCaptcha() {
   renderGrid(data.tiles, data.trickclick_required_clicks);
   //setStats(data.total_correct, data.targets_remaining);
   setStats(data.total_correct);
-  submitBtn.disabled = false;
+  if (!updatePreStageLock(data.total_correct, data.goal_correct)) {
+    submitBtn.disabled = false;
+  }
 }
 
 async function submitCaptcha() {
-  if (inFeedbackTransition) return;
+  if (inFeedbackTransition || preStageLocked) return;
   submitBtn.disabled = true;
 
   const sel = Array.from(selected.values());
@@ -182,6 +213,13 @@ async function submitCaptcha() {
   const isCorrect = Boolean(data.correct);
   //setStats(data.total_correct, data.targets_remaining);
   setStats(data.total_correct);
+  const lockedAfterSubmit = updatePreStageLock(data.total_correct, data.goal_correct);
+
+  if (STAGE === "captcha_pre" && lockedAfterSubmit) {
+    hideWordFlash();
+    clearFeedback();
+    return;
+  }
 
   if (isCorrect) {
     hideWordFlash();
@@ -210,6 +248,15 @@ if (STAGE === "captcha_post" && saveExitBtn) {
   });
 }
 
+if (STAGE === "captcha_pre" && stageAdvanceBtn) {
+  stageAdvanceBtn.addEventListener("click", async () => {
+    if (stageAdvanceBtn.disabled) return;
+    const r2 = await fetch(`${API}/finish`, { method: "POST" });
+    const out = await r2.json();
+    if (out && out.next_url) window.location.href = out.next_url;
+  });
+}
+
 // Start
 function setPrompt(robotName) {
   const base = "Click on all the bicycles to add a point";
@@ -224,7 +271,11 @@ function setPrompt(robotName) {
   try {
     const resp = await fetch(`${API}/state`);
     const st = await resp.json();
+    stageGoal = Number(st.goal_correct);
     setStats(st.total_correct);   // optional, but nice
+    if (updatePreStageLock(st.total_correct, stageGoal)) {
+      return;
+    }
     await nextCaptcha();
   } catch (err) {
     console.error("Init failed:", err);

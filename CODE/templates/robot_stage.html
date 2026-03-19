@@ -35,21 +35,53 @@
       font-size: 14px;
       color:#6f6f7e;
     }
+    .note{
+      margin-top: 10px;
+      font-size: 14px;
+      color:#8a8a98;
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>Robot Interaction</h1>
-  <div class="sub">(This screen will advance automatically when the experimenter ends the robot stage.)</div>
-  </div>
+    <div class="sub">You will now have a chance to talk to Zeke, the robot in today's experiment.</div>
+</div>
 
   <script>
+    const notificationUrl = {{ notification_url|tojson }};
+    let notificationAudio = null;
+
+    function stopNotification() {
+      if (!notificationAudio) return;
+      notificationAudio.pause();
+      notificationAudio.currentTime = 0;
+      notificationAudio.loop = false;
+      notificationAudio.src = "";
+      notificationAudio.load();
+      notificationAudio = null;
+    }
+
+    if (notificationUrl) {
+      notificationAudio = new Audio(notificationUrl);
+      notificationAudio.loop = true;
+      notificationAudio.play().catch((err) => {
+        console.warn("Robot-stage notification audio could not autoplay:", err);
+      });
+    }
+
     // Not obvious: advance only on Ctrl+Enter (or Cmd+Enter on Mac as extra convenience)
     document.addEventListener("keydown", async (e) => {
       const isEnter = (e.key === "Enter");
       const isCtrlEnter = isEnter && (e.ctrlKey || e.metaKey); // metaKey covers Cmd on macOS
 
+       if (isEnter && !isCtrlEnter) {
+        stopNotification();
+        return;
+      }
+
       if (!isCtrlEnter) return;
+      stopNotification();
 
       try {
         const r = await fetch("/api/robot/finish", { method: "POST" });
