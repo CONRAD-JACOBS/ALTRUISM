@@ -18,7 +18,7 @@
   {% endif %}
   {% if stage_id == "captcha_post" %}
     <button id="save-exit-trigger" class="save-exit-trigger" type="button">
-      Save &amp; Exit
+      Whenever you Want, Save &amp; Exit
     </button>
 
     <button id="competition-info-trigger" class="competition-info-trigger" type="button">
@@ -75,13 +75,14 @@
   </div>
   {% if stage_id == "captcha_post" %}
     <div class="post-task-note">
-      You may add as much as you want to Zeke's total.<br><br>
+      You may complete <span style="font-weight: bold; color: #ffb020">as many tasks as you want</span> to increase Zeke's total.<br><br>
       At any time you may click Save &amp; Exit to finish.<br><br>
       Scroll up to hide this box.
     </div>
   {% endif %}
   {% if stage_id == "captcha_pre" %}
     <div class="post-task-note">
+      You must complete <span style="font-weight: bold; color: #ffb020">10 tasks</span> to advance to the next stage.<br><br>
       Scroll up to hide this box.
     </div>
   {% endif %}
@@ -154,13 +155,6 @@
           trigger.addEventListener("click", openModal);
           closeBtn.addEventListener("click", closeModal);
         }
-
-        // Start at the bottom so participants immediately see the note.
-        window.requestAnimationFrame(() => {
-          window.requestAnimationFrame(() => {
-            window.scrollTo({ top: document.body.scrollHeight, behavior: "auto" });
-          });
-        });
       })();
     </script>
   {% endif %}

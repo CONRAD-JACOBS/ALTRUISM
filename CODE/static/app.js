@@ -21,6 +21,7 @@ const FEEDBACK_MODE = (promptEl?.dataset?.feedbackMode || "original").trim().toL
 const FEEDBACK_WRONG_MS = Math.max(0, Number(promptEl?.dataset?.feedbackWrongMs || 1000));
 const API = STAGE ? `/api/${STAGE}` : `/api`;
 const IMG = STAGE ? `/img/${STAGE}` : `/img`;
+const SHOULD_AUTO_SCROLL_BOTTOM = STAGE === "captcha_pre" || STAGE === "captcha_post";
 const COMPLETED_LABEL =
   STAGE === "captcha_post"
     ? "You have boosted Zeke's total by"
@@ -28,6 +29,7 @@ const COMPLETED_LABEL =
 let inFeedbackTransition = false;
 let stageGoal = null;
 let preStageLocked = false;
+let bottomScrollSettled = false;
 
 if (completedEl && STAGE === "captcha_post") {
   completedEl.textContent = `${COMPLETED_LABEL}: --`;
@@ -105,6 +107,48 @@ function showWordFlashWrong() {
   feedbackFlashEl.classList.add("feedback-flash--wrong");
 }
 
+function scrollToPageBottom() {
+  window.scrollTo({
+    top: Math.max(document.body.scrollHeight, document.documentElement.scrollHeight),
+    behavior: "auto"
+  });
+}
+
+function settleInitialBottomScroll() {
+  if (!SHOULD_AUTO_SCROLL_BOTTOM || bottomScrollSettled) return;
+
+  let attempts = 0;
+  let previousHeight = -1;
+  let stableFrames = 0;
+
+  const tick = () => {
+    const currentHeight = Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight
+    );
+
+    scrollToPageBottom();
+
+    if (currentHeight === previousHeight) {
+      stableFrames += 1;
+    } else {
+      stableFrames = 0;
+      previousHeight = currentHeight;
+    }
+
+    attempts += 1;
+    if (stableFrames >= 2 || attempts >= 24) {
+      bottomScrollSettled = true;
+      scrollToPageBottom();
+      return;
+    }
+
+    window.requestAnimationFrame(tick);
+  };
+
+  window.requestAnimationFrame(tick);
+}
+
 function renderGrid(tilesData, trickclickRequiredClicks) {
   tiles = tilesData;
   selected.clear();
@@ -148,6 +192,8 @@ function renderGrid(tilesData, trickclickRequiredClicks) {
 
     gridEl.appendChild(div);
   }
+
+  settleInitialBottomScroll();
 }
 
 async function nextCaptcha() {
@@ -269,6 +315,7 @@ function setPrompt(robotName) {
 
 (async function init() {
   try {
+    settleInitialBottomScroll();
     const resp = await fetch(`${API}/state`);
     const st = await resp.json();
     stageGoal = Number(st.goal_correct);
@@ -283,3 +330,7 @@ function setPrompt(robotName) {
     submitBtn.disabled = true;
   }
 })();
+
+if (SHOULD_AUTO_SCROLL_BOTTOM) {
+  window.addEventListener("load", settleInitialBottomScroll, { once: true });
+}
