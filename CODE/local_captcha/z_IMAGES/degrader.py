@@ -99,7 +99,7 @@ if __name__ == "__main__":
     contrast=1.0             # <1 reduces contrast (e.g., 0.9)
     brightness=1.2           # <1 darker (e.g., 0.95)
     black_and_white=True    # True = grayscale
-    noise_std=30.0            # 0 = off; ~5–20 is moderate
+    noise_std=20.0            # 0 = off; ~5–20 is moderate
     jpeg_quality=75          # lower = more artifacts; 25–60 typical
 
     process_folder(

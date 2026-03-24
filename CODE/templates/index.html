@@ -50,7 +50,9 @@
           data-robot="{{ robot_name|default('') }}"
           data-stage="{{ stage_id|default('') }}"
           data-feedback-mode="{{ captcha_feedback_mode|default('original') }}"
-          data-feedback-wrong-ms="{{ captcha_feedback_wrong_ms|default(1000) }}">
+          data-feedback-wrong-ms="{{ captcha_feedback_wrong_ms|default(1000) }}"
+          data-stage-enter-ts="{{ stage_enter_ts|default('') }}"
+          data-stage-timeout-sec="{{ stage_timeout_sec|default(0) }}">
           {{ prompt_text }}
         </div>
         <div class="stats">

@@ -19,6 +19,8 @@ const stageAdvanceBtn = document.getElementById("stage-advance-trigger");
 const STAGE = (promptEl?.dataset?.stage || "").trim();
 const FEEDBACK_MODE = (promptEl?.dataset?.feedbackMode || "original").trim().toLowerCase();
 const FEEDBACK_WRONG_MS = Math.max(0, Number(promptEl?.dataset?.feedbackWrongMs || 1000));
+const STAGE_ENTER_TS = (promptEl?.dataset?.stageEnterTs || "").trim();
+const STAGE_TIMEOUT_SEC = Math.max(0, Number(promptEl?.dataset?.stageTimeoutSec || 0));
 const API = STAGE ? `/api/${STAGE}` : `/api`;
 const IMG = STAGE ? `/img/${STAGE}` : `/img`;
 const SHOULD_AUTO_SCROLL_BOTTOM = STAGE === "captcha_pre" || STAGE === "captcha_post";
@@ -30,6 +32,8 @@ let inFeedbackTransition = false;
 let stageGoal = null;
 let preStageLocked = false;
 let bottomScrollSettled = false;
+let isStageFinishing = false;
+let stageTimeoutHandle = null;
 
 if (completedEl && STAGE === "captcha_post") {
   completedEl.textContent = `${COMPLETED_LABEL}: --`;
@@ -196,8 +200,70 @@ function renderGrid(tilesData, trickclickRequiredClicks) {
   settleInitialBottomScroll();
 }
 
+function disableStageInteraction() {
+  submitBtn.disabled = true;
+  if (saveExitBtn) saveExitBtn.disabled = true;
+  if (stageAdvanceBtn) stageAdvanceBtn.disabled = true;
+  if (captchaCardEl) {
+    captchaCardEl.classList.add("card--inactive");
+  }
+}
+
+async function finishStage(reason, fallbackMessage) {
+  if (isStageFinishing) return;
+  isStageFinishing = true;
+  inFeedbackTransition = true;
+  disableStageInteraction();
+
+  try {
+    const r = await fetch(`${API}/finish`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason })
+    });
+    const out = await r.json();
+
+    if (out && out.next_url) {
+      window.location.href = out.next_url;
+      return;
+    }
+  } catch (e) {
+    console.error("Stage finish failed:", e);
+  }
+
+  feedbackEl.textContent = fallbackMessage;
+}
+
+function getStageTimeoutRemainingMs() {
+  if (STAGE !== "captcha_post" || STAGE_TIMEOUT_SEC <= 0 || !STAGE_ENTER_TS) {
+    return null;
+  }
+
+  const enteredAtMs = Date.parse(STAGE_ENTER_TS);
+  if (Number.isNaN(enteredAtMs)) {
+    return null;
+  }
+
+  const deadlineMs = enteredAtMs + (STAGE_TIMEOUT_SEC * 1000);
+  return Math.max(0, deadlineMs - Date.now());
+}
+
+function scheduleStageTimeout() {
+  const remainingMs = getStageTimeoutRemainingMs();
+  if (remainingMs === null) return;
+
+  if (stageTimeoutHandle !== null) {
+    window.clearTimeout(stageTimeoutHandle);
+  }
+
+  stageTimeoutHandle = window.setTimeout(() => {
+    feedbackEl.textContent = "Time is up. Continuing…";
+    finishStage("stage_timeout", "Time is up. Please notify the researcher.");
+  }, remainingMs);
+}
+
 async function nextCaptcha() {
-  if (preStageLocked) return;
+  if (preStageLocked || isStageFinishing) return;
   hideWordFlash();
   clearFeedback();
   submitBtn.disabled = true;
@@ -207,24 +273,13 @@ async function nextCaptcha() {
   const data = await r.json();
 
   if (data.done) {
-    feedbackEl.textContent = "Finished. Continuing…";
-    submitBtn.disabled = true;
-
-    try {
-      const r2 = await fetch(`${API}/finish`, { method: "POST" });
-      const out = await r2.json();
-
-      if (out && out.next_url) {
-        window.location.href = out.next_url;
-        return;
-      }
-
-      // fallback if server didn't provide next_url
-      feedbackEl.textContent = "Finished. Please notify the researcher.";
-    } catch (e) {
-      feedbackEl.textContent = "Finished. Please notify the researcher.";
-    }
-
+    feedbackEl.textContent = data.timed_out ? "Time is up. Continuing…" : "Finished. Continuing…";
+    await finishStage(
+      data.timed_out ? "stage_timeout" : "stage_finish",
+      data.timed_out
+        ? "Time is up. Please notify the researcher."
+        : "Finished. Please notify the researcher."
+    );
     return;
   }
 
@@ -237,7 +292,7 @@ async function nextCaptcha() {
 }
 
 async function submitCaptcha() {
-  if (inFeedbackTransition || preStageLocked) return;
+  if (inFeedbackTransition || preStageLocked || isStageFinishing) return;
   submitBtn.disabled = true;
 
   const sel = Array.from(selected.values());
@@ -252,6 +307,17 @@ async function submitCaptcha() {
   if (data.error) {
     feedbackEl.textContent = data.error;
     submitBtn.disabled = false;
+    return;
+  }
+
+  if (data.done) {
+    feedbackEl.textContent = data.timed_out ? "Time is up. Continuing…" : "Finished. Continuing…";
+    await finishStage(
+      data.timed_out ? "stage_timeout" : "stage_finish",
+      data.timed_out
+        ? "Time is up. Please notify the researcher."
+        : "Finished. Please notify the researcher."
+    );
     return;
   }
 
@@ -287,19 +353,16 @@ submitBtn.addEventListener("click", submitCaptcha);
 
 if (STAGE === "captcha_post" && saveExitBtn) {
   saveExitBtn.addEventListener("click", async () => {
+    if (isStageFinishing) return;
     await fetch(`${API}/quit`, { method: "POST" });
-    const r2 = await fetch(`${API}/finish`, { method: "POST" });
-    const out = await r2.json();
-    if (out && out.next_url) window.location.href = out.next_url;
+    await finishStage("stage_finish", "Finished. Please notify the researcher.");
   });
 }
 
 if (STAGE === "captcha_pre" && stageAdvanceBtn) {
   stageAdvanceBtn.addEventListener("click", async () => {
-    if (stageAdvanceBtn.disabled) return;
-    const r2 = await fetch(`${API}/finish`, { method: "POST" });
-    const out = await r2.json();
-    if (out && out.next_url) window.location.href = out.next_url;
+    if (stageAdvanceBtn.disabled || isStageFinishing) return;
+    await finishStage("stage_finish", "Finished. Please notify the researcher.");
   });
 }
 
@@ -316,10 +379,16 @@ function setPrompt(robotName) {
 (async function init() {
   try {
     settleInitialBottomScroll();
+    scheduleStageTimeout();
     const resp = await fetch(`${API}/state`);
     const st = await resp.json();
     stageGoal = Number(st.goal_correct);
     setStats(st.total_correct);   // optional, but nice
+    if (st.timed_out) {
+      feedbackEl.textContent = "Time is up. Continuing…";
+      await finishStage("stage_timeout", "Time is up. Please notify the researcher.");
+      return;
+    }
     if (updatePreStageLock(st.total_correct, stageGoal)) {
       return;
     }

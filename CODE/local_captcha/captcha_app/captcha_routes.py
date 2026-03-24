@@ -50,6 +50,7 @@ def load_cfg(config_path: Path):
     cfg["captcha_feedback_mode"] = feedback_mode
     cfg["captcha_feedback_right_ms"] = parse_nonnegative_int(cfg.get("captcha_feedback_right_ms", 1000), 1000)
     cfg["captcha_feedback_wrong_ms"] = parse_nonnegative_int(cfg.get("captcha_feedback_wrong_ms", 1000), 1000)
+    cfg["stage_timeout_sec"] = parse_nonnegative_int(cfg.get("stage_timeout_sec", 0), 0)
     cfg["trickclicks_enabled"] = parse_bool(cfg.get("trickclicks_enabled", False), False)
     cfg["show_competition_scoreboard"] = parse_bool(cfg.get("show_competition_scoreboard", False), False)
     cfg["competition_scores"] = cfg.get(
@@ -170,6 +171,16 @@ def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, conf
         sess = get_stage_state(exp_sid, exp)
         return exp_sid, exp, sess
 
+    def is_stage_timed_out(sess):
+        timeout_sec = int(CFG.get("stage_timeout_sec", 0) or 0)
+        stage_enter_ts = sess.get("stage_enter_ts")
+        if timeout_sec <= 0 or not stage_enter_ts:
+            return False
+
+        entered_dt = datetime.fromisoformat(stage_enter_ts)
+        elapsed_sec = (datetime.now() - entered_dt).total_seconds()
+        return elapsed_sec >= timeout_sec
+
     def sample_distractors(sess, n):
         chosen = []
         for _ in range(n):
@@ -278,6 +289,8 @@ def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, conf
             prompt_text=sess["prompt_text"],
             grid_n=GRID_N,
             stage_id=stage_id,
+            stage_enter_ts=sess.get("stage_enter_ts", ""),
+            stage_timeout_sec=CFG["stage_timeout_sec"],
             captcha_feedback_mode=CFG["captcha_feedback_mode"],
             captcha_feedback_right_ms=CFG["captcha_feedback_right_ms"],
             captcha_feedback_wrong_ms=CFG["captcha_feedback_wrong_ms"],
@@ -293,6 +306,9 @@ def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, conf
     @app.route(f"/api/{stage_id}/state", endpoint=f"{stage_id}_api_state")
     def api_state():
         _, _, sess = get_ctx()
+        timed_out = is_stage_timed_out(sess)
+        if timed_out:
+            sess["active"] = False
         remaining = max(0, sess["goal_correct"] - sess["total_correct"])
         return jsonify({
             "prompt_text": sess["prompt_text"],
@@ -301,12 +317,16 @@ def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, conf
             "goal_correct": sess["goal_correct"],
             "recaptchas_remaining": remaining,
             "captcha_index": sess["captcha_index"],
-            "active": sess["active"]
+            "active": sess["active"],
+            "timed_out": timed_out,
         })
 
     @app.route(f"/api/{stage_id}/next", endpoint=f"{stage_id}_api_next")
     def api_next():
         _, _, sess = get_ctx()
+        if is_stage_timed_out(sess):
+            sess["active"] = False
+            return jsonify({"done": True, "timed_out": True})
         if not sess["active"]:
             return jsonify({"done": True})
 
@@ -332,6 +352,18 @@ def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, conf
     @app.route(f"/api/{stage_id}/submit", methods=["POST"], endpoint=f"{stage_id}_api_submit")
     def api_submit():
         exp_sid, exp, sess = get_ctx()
+
+        if is_stage_timed_out(sess):
+            sess["active"] = False
+            sess["last_tiles"] = None
+            remaining = max(0, sess["goal_correct"] - sess["total_correct"])
+            return jsonify({
+                "done": True,
+                "timed_out": True,
+                "total_correct": sess["total_correct"],
+                "goal_correct": sess["goal_correct"],
+                "recaptchas_remaining": remaining,
+            })
 
         if (not sess["active"]) or (not sess.get("last_tiles")):
             return jsonify({"error": "No active captcha."}), 400
@@ -440,6 +472,8 @@ def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, conf
     @app.route(f"/api/{stage_id}/finish", methods=["POST"], endpoint=f"{stage_id}_api_finish")
     def api_finish():
         exp_sid, exp, sess = get_ctx()
+        payload = request.get_json(silent=True) or {}
+        reason = str(payload.get("reason") or "stage_finish").strip() or "stage_finish"
         if not sess.get("finish_logged"):
             timestamp_submit = datetime.now().isoformat(timespec="milliseconds")
             timestamp_display = sess.get("last_display_ts") or sess.get("stage_enter_ts") or timestamp_submit
@@ -463,7 +497,7 @@ def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, conf
                 selected_files=[],
                 questionnaire_json={
                     "status": "complete",
-                    "reason": "stage_finish",
+                    "reason": reason,
                 },
             )
             sess["finish_logged"] = True
