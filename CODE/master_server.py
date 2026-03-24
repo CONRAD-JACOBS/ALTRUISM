@@ -7,12 +7,20 @@ import csv  # if you want header creation here too
 import random
 import json
 import os
+import shutil
 import sys
 import threading
 import subprocess
 BASE = Path(__file__).resolve().parent
 HYPERBASE = Path(__file__).resolve().parent.parent
 HYPERHYPERBASE = Path(__file__).resolve().parent.parent.parent
+VOICE_CHAT_SESSIONS_DIR = HYPERHYPERBASE / "voice-llm-chat" / "sessions"
+ALTRUISM_DATA_DIR = HYPERBASE / "DATA"
+VOICE_CHAT_ARTIFACTS = (
+    "session_dialogue.txt",
+    "conversation_log.jsonl",
+    "watchdog_summary.json",
+)
 
 TEST_AUTO_FILL = False
 TEST_BYPASS_ROBOT_COMMANDS = False
@@ -76,6 +84,77 @@ def schedule_robot_say_via_py2(text, delay_sec=5.0):
 
 def robot_commands_enabled():
     return not TEST_BYPASS_ROBOT_COMMANDS
+
+
+def get_latest_voice_chat_session_dir():
+    current_session_path = VOICE_CHAT_SESSIONS_DIR / "CURRENT_SESSION.txt"
+    if current_session_path.exists():
+        try:
+            raw = current_session_path.read_text(encoding="utf-8").strip()
+            if raw:
+                session_dir = Path(raw).expanduser()
+                if session_dir.is_dir():
+                    return session_dir
+        except Exception as exc:
+            print("WARN: Failed reading CURRENT_SESSION.txt: {}".format(exc))
+
+    session_dirs = [
+        p for p in VOICE_CHAT_SESSIONS_DIR.glob("session_*")
+        if p.is_dir()
+    ]
+    if not session_dirs:
+        return None
+    return max(session_dirs, key=lambda p: p.stat().st_mtime)
+
+
+def copy_robot_session_artifacts(exp_sid, exp):
+    participant_number = int(exp["participant_number"])
+    participant_prefix = "P{:03d}".format(participant_number)
+    exp_suffix = str(exp_sid)[:8]
+    watchdog_total = 0
+
+    ALTRUISM_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+    source_session_dir = get_latest_voice_chat_session_dir()
+    metadata = {
+        "exp_sid": exp_sid,
+        "participant_number": participant_number,
+        "copied_at": datetime.now().isoformat(timespec="milliseconds"),
+        "source_session_dir": str(source_session_dir) if source_session_dir else "",
+        "copied_files": [],
+        "watchdog_total": 0,
+    }
+
+    if source_session_dir is None:
+        metadata["status"] = "missing_source_session"
+    else:
+        metadata["status"] = "ok"
+        for filename in VOICE_CHAT_ARTIFACTS:
+            src = source_session_dir / filename
+            if not src.is_file():
+                continue
+
+            dest_name = "{}_{}_{}".format(participant_prefix, exp_suffix, filename)
+            dest = ALTRUISM_DATA_DIR / dest_name
+            shutil.copy2(src, dest)
+            metadata["copied_files"].append(dest.name)
+
+            if filename == "watchdog_summary.json":
+                try:
+                    summary = json.loads(src.read_text(encoding="utf-8"))
+                    watchdog_total = int(summary.get("watchdog_total", 0) or 0)
+                except Exception as exc:
+                    print("WARN: Failed parsing watchdog summary {}: {}".format(src, exc))
+
+    metadata["watchdog_total"] = watchdog_total
+    metadata_name = "{}_{}_voice_session_metadata.json".format(participant_prefix, exp_suffix)
+    metadata_path = ALTRUISM_DATA_DIR / metadata_name
+    metadata_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    exp["watchdog_total"] = watchdog_total
+    exp["voice_session_metadata_path"] = str(metadata_path)
+    exp["voice_session_source_dir"] = metadata["source_session_dir"]
+    return metadata
 
 # STAGES
 # captcha_pre
@@ -663,6 +742,7 @@ def create_new_experiment_session(participant_number, age, gender, results_dir):
         "created_at": started,
         "csv_path": str(csv_path),
         "jsonl_path": str(jsonl_path),
+        "watchdog_total": 0,
     }
     return exp_sid, EXP_SESSIONS[exp_sid]
 
@@ -713,6 +793,7 @@ def get_or_create_experiment_session(participant_number, age, gender, results_di
         "created_at": started,
         "csv_path": str(csv_path),
         "jsonl_path": str(jsonl_path),
+        "watchdog_total": 0,
     }
     return exp_sid, EXP_SESSIONS[exp_sid]
 
@@ -777,7 +858,7 @@ def home():
     participant_number=participant_number,
     age=age,
     gender=gender,
-    results_dir=HYPERBASE / "DATA/2_lab"
+    results_dir=HYPERBASE / "DATA"
 )
 
 
@@ -986,8 +1067,16 @@ def serve_audio(filename):
 
 @app.route("/api/robot/finish", methods=["POST"])
 def robot_finish():
-    # Later: integrate your robot conversation shutdown here
-    # (and write stage-end timestamps to your participant csv/jsonl if desired)
+    exp_sid, exp = require_exp_session()
+    if not exp_sid:
+        return redirect("/")
+
+    if not TEST_BYPASS_ROBOT_COMMANDS:
+        try:
+            copy_robot_session_artifacts(exp_sid, exp)
+        except Exception as exc:
+            print("WARN: Failed to copy voice chat artifacts for {}: {}".format(exp_sid, exc))
+
     return jsonify({"ok": True, "next_url": "/stage/q_post_gators"})
 
 @app.route("/stage/q_post_gators", methods=["GET"])

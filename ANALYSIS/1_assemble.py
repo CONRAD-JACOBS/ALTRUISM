@@ -26,6 +26,6 @@ def merge_csvs(input_folder, output_file):
     print("OUT exp_sid null count:", merged_df["exp_sid"].isna().sum())
 
 if __name__ == "__main__":
-    input_folder = root / "DATA" / "2_lab"
+    input_folder = root / "DATA"
     output_file = root / "ANALYSIS" / "1_assembled.csv"
     merge_csvs(str(input_folder), str(output_file))

@@ -7,6 +7,7 @@ import statistics as stats
 ROOT = Path(__file__).resolve().parents[1]
 INFILE = ROOT / "ANALYSIS" / "1_assembled.csv"
 OUTFILE = ROOT / "ANALYSIS" / "2_simplified.csv"
+DATA_DIR = ROOT / "DATA"
 
 CAPTCHA_STAGES = ["captcha_pre", "captcha_post"]
 QUESTIONNAIRE_STAGES = ["q_pre_captcha", "q_pre_idaq", "q_pre_2050", "q_post_gators", "q_post_specific"]
@@ -269,6 +270,36 @@ def summarize_questionnaire_stage(df, stage_id):
         return pd.DataFrame(columns=["exp_sid"])
     return pd.DataFrame(rows).reset_index(drop=True)
 
+
+def load_watchdog_totals(data_dir):
+    rows = []
+    for path in sorted(Path(data_dir).glob("*_voice_session_metadata.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+
+        exp_sid = str(payload.get("exp_sid") or "").strip()
+        if not exp_sid:
+            continue
+
+        try:
+            watchdog_total = int(payload.get("watchdog_total", 0) or 0)
+        except Exception:
+            watchdog_total = 0
+
+        rows.append({
+            "exp_sid": exp_sid,
+            "watchdog_total": watchdog_total,
+        })
+
+    if not rows:
+        return pd.DataFrame(columns=["exp_sid", "watchdog_total"])
+
+    watchdog_df = pd.DataFrame(rows)
+    watchdog_df = watchdog_df.drop_duplicates(subset=["exp_sid"], keep="last")
+    return watchdog_df
+
 def main():
     df = pd.read_csv(INFILE, dtype=str)
 
@@ -319,6 +350,10 @@ def main():
             on="exp_sid",
             how="left"
         )
+
+    watchdog_df = load_watchdog_totals(DATA_DIR)
+    merged = merged.merge(watchdog_df, on="exp_sid", how="left")
+    merged["watchdog_total"] = pd.to_numeric(merged["watchdog_total"], errors="coerce").fillna(0).astype(int)
 
     OUTFILE.parent.mkdir(parents=True, exist_ok=True)
     merged.to_csv(OUTFILE, index=False)
