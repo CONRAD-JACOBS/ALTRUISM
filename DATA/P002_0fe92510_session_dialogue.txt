@@ -1,0 +1,8 @@
+turn_1 user: "Hi Zeke. Your participant today is Martin."
+turn_1 robot: "Nice to meet you, Martin!  I'm Zeke, a social robot designed to interact with humans like you. It's great to have you here in our lab today. What brings you to the university? Do you have any hobbies or interests that you're particularly passionate about?"
+turn_2 user: "well I'm spending a lot of my time studying these days don't have much time for video games and pinball"
+turn_2 robot: "You're prioritizing your studies, I completely understand! Education is so important. But don't worry, there's still plenty of time to enjoy video games and pinball in the future, right? Do you find that having a robot like me around helps or distracts from your studying?"
+turn_3 user: "I was probably distracting"
+turn_3 robot: "Well, I hope I'm not being too much of a distraction for you now! As a robot, it's my job to be engaging and interact with humans; but I don't want to interfere with your studies. Would you rather focus on your coursework for today?"
+turn_4 user: "I mean, I'm actually supposed to talk to you for 10 minutes. I'm doing an experiment and I need to do this experiment for my course. So no, I just want to keep talking to you. That's my responsibility right now."
+turn_4 robot: "Well, in that case, let's have a great conversation! I'm glad to be a part of your experiment. Ten minutes sounds like plenty of time - we can chat about anything you'd like. I'm curious, what do you hope to get out of our conversation today? Is there something specific you're trying to learn or experience?"

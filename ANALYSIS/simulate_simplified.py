@@ -156,6 +156,12 @@ def simulate_one(rng, participant_number):
         lo=1.0, hi=7.0
     )
 
+    total_words = int(np.clip(round(rng.normal(180 + 45 * engagement + 25 * empathy_trait, 55)), 10, 650))
+    spoken_turns = int(np.clip(round(rng.normal(9 + 1.5 * engagement, 2.0)), 2, 20))
+    mean_words_per_turn = float(total_words) / float(spoken_turns)
+    word_rate_wps = float(np.clip(rng.normal(2.2 + 0.20 * speed + 0.12 * engagement, 0.35), 0.7, 4.5))
+    mean_latency_sec = float(np.clip(rng.lognormal(mean=np.log(2.4), sigma=0.45) * np.exp(-0.18 * engagement), 0.2, 12.0))
+
     # -----------------------
     # captcha_post
     # -----------------------
@@ -212,6 +218,10 @@ def simulate_one(rng, participant_number):
         "q_post_specific_total_time": float(q_post_specific_total_time),
         "q_post_specific_mentacy_belief_scale": float(q_post_specific_mentacy_belief_scale),
         "q_post_specific_empathy": float(q_post_specific_empathy),
+        "total_words": int(total_words),
+        "mean_words_per_turn": float(mean_words_per_turn),
+        "word_rate_wps": float(word_rate_wps),
+        "mean_latency_sec": float(mean_latency_sec),
     }
 
 
@@ -237,6 +247,7 @@ def main():
         "q_pre_2050_total_time","q_pre_2050_mean_futurism_score",
         "q_post_gators_total_time","q_post_gators_pos","q_post_gators_neg",
         "q_post_specific_total_time","q_post_specific_mentacy_belief_scale","q_post_specific_empathy",
+        "total_words","mean_words_per_turn","word_rate_wps","mean_latency_sec",
     ]
     df = df[cols]
 

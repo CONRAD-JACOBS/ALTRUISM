@@ -8,7 +8,7 @@
   "captcha_feedback_mode": "word_flash",
   "captcha_feedback_right_ms": 1000,
   "captcha_feedback_wrong_ms": 2000,
-  "stage_timeout_sec": 20,
+  "stage_timeout_sec": 1200,
   "show_competition_scoreboard": true,
   "competition_scores": {
     "zerd": 361,

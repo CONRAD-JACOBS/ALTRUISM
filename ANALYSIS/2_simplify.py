@@ -300,6 +300,36 @@ def load_watchdog_totals(data_dir):
     watchdog_df = watchdog_df.drop_duplicates(subset=["exp_sid"], keep="last")
     return watchdog_df
 
+
+def load_session_language_metrics(data_dir):
+    rows = []
+    for path in sorted(Path(data_dir).glob("*_voice_session_metadata.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+
+        exp_sid = str(payload.get("exp_sid") or "").strip()
+        if not exp_sid:
+            continue
+
+        rows.append({
+            "exp_sid": exp_sid,
+            "total_words": pd.to_numeric(payload.get("total_words"), errors="coerce"),
+            "mean_words_per_turn": pd.to_numeric(payload.get("mean_words_per_turn"), errors="coerce"),
+            "word_rate_wps": pd.to_numeric(payload.get("word_rate_wps"), errors="coerce"),
+            "mean_latency_sec": pd.to_numeric(payload.get("mean_latency_sec"), errors="coerce"),
+        })
+
+    if not rows:
+        return pd.DataFrame(
+            columns=["exp_sid", "total_words", "mean_words_per_turn", "word_rate_wps", "mean_latency_sec"]
+        )
+
+    metrics_df = pd.DataFrame(rows)
+    metrics_df = metrics_df.drop_duplicates(subset=["exp_sid"], keep="last")
+    return metrics_df
+
 def main():
     df = pd.read_csv(INFILE, dtype=str)
 
@@ -354,6 +384,9 @@ def main():
     watchdog_df = load_watchdog_totals(DATA_DIR)
     merged = merged.merge(watchdog_df, on="exp_sid", how="left")
     merged["watchdog_total"] = pd.to_numeric(merged["watchdog_total"], errors="coerce").fillna(0).astype(int)
+
+    language_df = load_session_language_metrics(DATA_DIR)
+    merged = merged.merge(language_df, on="exp_sid", how="left")
 
     OUTFILE.parent.mkdir(parents=True, exist_ok=True)
     merged.to_csv(OUTFILE, index=False)

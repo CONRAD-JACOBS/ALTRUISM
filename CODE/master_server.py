@@ -20,9 +20,10 @@ VOICE_CHAT_ARTIFACTS = (
     "session_dialogue.txt",
     "conversation_log.jsonl",
     "watchdog_summary.json",
+    "session_language_metrics.json",
 )
 
-TEST_AUTO_FILL = False
+TEST_AUTO_FILL = True
 TEST_BYPASS_ROBOT_COMMANDS = False
 # In robot stage:
 # Press Enter to stop the alert sound. Press Ctrl+Enter to advance manually.
@@ -123,6 +124,10 @@ def copy_robot_session_artifacts(exp_sid, exp):
         "source_session_dir": str(source_session_dir) if source_session_dir else "",
         "copied_files": [],
         "watchdog_total": 0,
+        "total_words": None,
+        "mean_words_per_turn": None,
+        "word_rate_wps": None,
+        "mean_latency_sec": None,
     }
 
     if source_session_dir is None:
@@ -145,6 +150,15 @@ def copy_robot_session_artifacts(exp_sid, exp):
                     watchdog_total = int(summary.get("watchdog_total", 0) or 0)
                 except Exception as exc:
                     print("WARN: Failed parsing watchdog summary {}: {}".format(src, exc))
+            elif filename == "session_language_metrics.json":
+                try:
+                    summary = json.loads(src.read_text(encoding="utf-8"))
+                    metadata["total_words"] = summary.get("total_words")
+                    metadata["mean_words_per_turn"] = summary.get("mean_words_per_turn")
+                    metadata["word_rate_wps"] = summary.get("word_rate_wps")
+                    metadata["mean_latency_sec"] = summary.get("mean_latency_sec")
+                except Exception as exc:
+                    print("WARN: Failed parsing session language metrics {}: {}".format(src, exc))
 
     metadata["watchdog_total"] = watchdog_total
     metadata_name = "{}_{}_voice_session_metadata.json".format(participant_prefix, exp_suffix)
@@ -996,7 +1010,7 @@ def q_pre_2050_page():
     if "q_pre_captcha_robot_test" not in exp:
         exp["q_pre_captcha_robot_test"] = True
         if robot_commands_enabled():
-            schedule_robot_say_via_py2("Oh, hey, did the experiment start already?", delay_sec=22)
+            schedule_robot_say_via_py2("Oh, hey, I was just dreaming for a moment. Did the experiment start already?", delay_sec=22)
 
     return render_template(
         "questionnaire.html",
@@ -1092,7 +1106,7 @@ def q_post_gators_page():
     saved = exp.get("questionnaires", {}).get("q_post_gators", {})
     return render_template(
         "questionnaire.html",
-        title="General Questionnaire",
+        title="General Post-Questionnaire",
         questions=Q_POST_GATORS,
         submit_url="/api/q_post_gators/submit",
         error=None,
@@ -1154,7 +1168,7 @@ def q_post_page():
 
     return render_template(
         "questionnaire.html",
-        title="Specific Questionnaire",
+        title="Specific Post-Questionnaire",
         questions=Q_POST_SPECIFIC,
         submit_url="/api/q_post/submit",
         error=None,
@@ -1207,7 +1221,7 @@ def q_post_submit():
 def done():
     return (
         "<div style='min-height:100vh;display:flex;align-items:center;justify-content:center;'>"
-        "<h2>All done. <br>Your data has been saved. <br> Please fetch the experimenter.</h2>"
+        "<h2>All done. <br>Your data has been saved. <br> Please inform the experimenter.</h2>"
         "</div>"
     )
 
