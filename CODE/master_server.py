@@ -57,25 +57,29 @@ end tell
 
 def schedule_robot_say_via_py2(text, delay_sec=5.0):
     def _task():
-        if sys.platform != "darwin":
-            print("WARN: Robot say launcher is macOS-only.")
+        session_dir = get_latest_voice_chat_session_dir()
+        if not session_dir:
+            print("WARN: No active voice-chat session found for delayed robot speech.")
             return
-        text_json = json.dumps(text)
-        cmd = [
-            "/Library/Frameworks/Python.framework/Versions/2.7/bin/python",
-            "-c",
-            "from src_py2.robot.nao_robot import NAORobot;"
-            "from src_py2.robot.conversation_manager import ConversationManager;"
-            "r=NAORobot('clas');"
-            "c=ConversationManager(r);"
-            "txt={};"
-            "dur=max(2.5, 0.45*len([w for w in txt.strip().split() if w]));"
-            "c.speak_n_gest_next_level([[txt, None, None, dur]], leds=True);".format(text_json),
-        ]
+
+        system_inbox_dir = session_dir / "robot_system_inbox"
+        system_inbox_dir.mkdir(parents=True, exist_ok=True)
+
+        payload = {
+            "kind": "say",
+            "text": text,
+            "created_at": datetime.now().isoformat(timespec="seconds"),
+            "source": "master_server_delayed_prompt",
+        }
+        stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        out_path = system_inbox_dir / "system_{}_say.json".format(stamp)
+        tmp_path = system_inbox_dir / "system_{}_say.json.tmp".format(stamp)
+
         try:
-            subprocess.Popen(cmd, cwd="{}/uq-neuro-nao".format(HYPERHYPERBASE))
+            tmp_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+            os.replace(str(tmp_path), str(out_path))
         except Exception as exc:
-            print("WARN: Failed to launch py2 say: {}".format(exc))
+            print("WARN: Failed to enqueue delayed robot speech: {}".format(exc))
 
     timer = threading.Timer(delay_sec, _task)
     timer.daemon = True
