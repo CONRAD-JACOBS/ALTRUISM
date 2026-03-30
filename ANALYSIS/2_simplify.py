@@ -134,7 +134,6 @@ def summarize_questionnaire_stage(df, stage_id):
             comp_2_name = "difficulty"
 
             fun_keys = [
-                "captcha_task_meaningfulness",
                 "general_captcha_liking",
                 "captcha_task_fun",
                 "captcha_task_enjoyment",
@@ -222,7 +221,7 @@ def summarize_questionnaire_stage(df, stage_id):
         # ---------- q_post_specific ----------
         elif stage_id == "q_post_specific":
             comp_1_name = "mentacy_belief_scale"
-            comp_2_name = "empathy"
+            comp_2_name = "likeability"
 
             belief = responses.get("mentacy_belief")
             conf = responses.get("belief_confidence")
@@ -236,14 +235,7 @@ def summarize_questionnaire_stage(df, stage_id):
 
             comp_1 = sign * (float(conf) - 1) if conf is not None else None
 
-            emp_keys = [
-                "conversation_interestingness",
-                "robot_empathy",
-                "robot_friendliness",
-                "robot_likeability",
-            ]
-            emp_vals = [float(responses[k]) for k in emp_keys if k in responses]
-            comp_2 = stats.mean(emp_vals) if emp_vals else None
+            comp_2 = float(responses.get("robot_likeability")) if "robot_likeability" in responses else None
 
         else:
             raise ValueError(f"Unknown questionnaire stage: {stage_id}")

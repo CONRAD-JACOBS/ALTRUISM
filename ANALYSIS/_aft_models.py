@@ -28,7 +28,7 @@ def main():
         "q_pre_idaq_total_time", "q_pre_idaq",
         "q_post_gators_total_time", "q_post_gators_pos", "q_post_gators_neg",
         "q_post_specific_total_time", "q_post_specific_mentacy_belief_scale",
-        "q_post_specific_empathy",
+        "q_post_specific_likeability",
     ]
     for c in num_cols:
         if c in df.columns:
@@ -45,14 +45,14 @@ def main():
     df[EVENT_COL] = 1
 
     # ---- define constructs ----
-    # empathy in your model = q_post_specific_empathy (1-7 composite mean)
-    df["empathy"] = df["q_post_specific_empathy"]
+    # likeability in your model = robot_likeability (1-7 single item)
+    df["likeability"] = df["q_post_specific_likeability"]
 
     # mentacy in your model = q_post_specific_mentacy_belief_scale (-6..6)
     df["mentacy"] = df["q_post_specific_mentacy_belief_scale"]
 
     # interaction
-    df["emp_x_ment"] = df["empathy"] * df["mentacy"]
+    df["like_x_ment"] = df["likeability"] * df["mentacy"]
 
     # “negatively signed” difficulty: higher values -> easier/less difficult
     df["difficulty_signed"] = -df["q_pre_difficulty"]
@@ -68,11 +68,11 @@ def main():
     # so you pass duration_col, not log(duration).
     models = [
         ("M1_primary",
-         [EVENT_COL, DURATION_COL, "empathy", "mentacy", "emp_x_ment"]),
+         [EVENT_COL, DURATION_COL, "likeability", "mentacy", "like_x_ment"]),
         ("M2_add_task_appraisal",
-         [EVENT_COL, DURATION_COL, "empathy", "mentacy", "emp_x_ment", "q_pre_fun", "difficulty_signed"]),
+         [EVENT_COL, DURATION_COL, "likeability", "mentacy", "like_x_ment", "q_pre_fun", "difficulty_signed"]),
         ("M3_exploratory_traits",
-         [EVENT_COL, DURATION_COL, "empathy", "mentacy", "emp_x_ment", "anthro", "q_post_gators_pos", "gators_neg_signed"]),
+         [EVENT_COL, DURATION_COL, "likeability", "mentacy", "like_x_ment", "anthro", "q_post_gators_pos", "gators_neg_signed"]),
     ]
 
     results = []

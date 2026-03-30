@@ -149,7 +149,7 @@ def simulate_one(rng, participant_number):
     mentacy_scaled = int(np.clip(round(mentacy_lat * 2.0), -6, 6))
     q_post_specific_mentacy_belief_scale = mentacy_scaled
 
-    q_post_specific_empathy = rlikert_cont(
+    q_post_specific_likeability = rlikert_cont(
         rng,
         mu=3.5 + 0.60 * empathy_trait + 0.25 * q_post_gators_pos - 0.15 * q_post_gators_neg,
         sd=0.7,
@@ -217,7 +217,7 @@ def simulate_one(rng, participant_number):
 
         "q_post_specific_total_time": float(q_post_specific_total_time),
         "q_post_specific_mentacy_belief_scale": float(q_post_specific_mentacy_belief_scale),
-        "q_post_specific_empathy": float(q_post_specific_empathy),
+        "q_post_specific_likeability": float(q_post_specific_likeability),
         "total_words": int(total_words),
         "mean_words_per_turn": float(mean_words_per_turn),
         "word_rate_wps": float(word_rate_wps),
@@ -246,7 +246,7 @@ def main():
         "q_pre_idaq_total_time","q_pre_idaq",
         "q_pre_2050_total_time","q_pre_2050_mean_futurism_score",
         "q_post_gators_total_time","q_post_gators_pos","q_post_gators_neg",
-        "q_post_specific_total_time","q_post_specific_mentacy_belief_scale","q_post_specific_empathy",
+        "q_post_specific_total_time","q_post_specific_mentacy_belief_scale","q_post_specific_likeability",
         "total_words","mean_words_per_turn","word_rate_wps","mean_latency_sec",
     ]
     df = df[cols]

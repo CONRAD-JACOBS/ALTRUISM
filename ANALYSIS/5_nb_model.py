@@ -14,7 +14,7 @@ except Exception:
 
 OUTCOME = "captcha_post_completions"
 PRIMARY = [
-    "q_post_specific_empathy",
+    "q_post_specific_likeability",
     "q_post_specific_mentacy_belief_scale",
 ]
 EXPLORATORY = [
@@ -85,18 +85,18 @@ def run_nb_model_suite(csv_path, out_dir=None):
         raise ValueError("No complete rows remain after numeric coercion + dropna.")
 
     # Center primary terms so interaction is easier to interpret.
-    dat["emp_c"] = dat["q_post_specific_empathy"] - dat["q_post_specific_empathy"].mean()
+    dat["like_c"] = dat["q_post_specific_likeability"] - dat["q_post_specific_likeability"].mean()
     dat["ment_c"] = dat["q_post_specific_mentacy_belief_scale"] - dat["q_post_specific_mentacy_belief_scale"].mean()
-    dat["emp_x_ment"] = dat["emp_c"] * dat["ment_c"]
+    dat["like_x_ment"] = dat["like_c"] * dat["ment_c"]
 
     formulas = {
-        "theory_primary_only": "{} ~ emp_c + ment_c".format(OUTCOME),
+        "theory_primary_only": "{} ~ like_c + ment_c".format(OUTCOME),
         "theory_plus_exploratory": (
-            "{} ~ emp_c + ment_c + emp_x_ment + q_post_gators_pos + q_post_gators_neg + q_pre_idaq".format(OUTCOME)
+            "{} ~ like_c + ment_c + like_x_ment + q_post_gators_pos + q_post_gators_neg + q_pre_idaq".format(OUTCOME)
         ),
         "trivial_only": "{} ~ q_pre_captcha_fun + q_pre_captcha_difficulty".format(OUTCOME),
         "theory_plus_exploratory_plus_trivial": (
-            "{} ~ emp_c + ment_c + emp_x_ment + q_post_gators_pos + q_post_gators_neg + q_pre_idaq + "
+            "{} ~ like_c + ment_c + like_x_ment + q_post_gators_pos + q_post_gators_neg + q_pre_idaq + "
             "q_pre_captcha_fun + q_pre_captcha_difficulty".format(OUTCOME)
         ),
     }

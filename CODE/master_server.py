@@ -23,7 +23,7 @@ VOICE_CHAT_ARTIFACTS = (
     "session_language_metrics.json",
 )
 
-TEST_AUTO_FILL = True
+TEST_AUTO_FILL = False
 TEST_BYPASS_ROBOT_COMMANDS = False
 # In robot stage:
 # Press Enter to stop the alert sound. Press Ctrl+Enter to advance manually.

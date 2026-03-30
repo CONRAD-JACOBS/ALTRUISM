@@ -151,7 +151,7 @@ def main():
         "q_post_gators_pos",
         "q_post_gators_neg",
         "q_post_specific_mentacy_belief_scale",
-        "q_post_specific_empathy",
+        "q_post_specific_likeability",
     ]
 
     numeric_df = df[NUM_ROWS].copy()
