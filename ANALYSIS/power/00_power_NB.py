@@ -65,7 +65,7 @@ def _binom_wilson_ci(k, n, level=0.95):
 
 def _fit_nb_pvalue(df, term, alpha_nb):
     try:
-        X = df[["EMP", "MENT", "EMPxMENT"]]
+        X = df[["LIKE", "MENT", "LIKExMENT"]]
         X = sm.add_constant(X, has_constant="add")
         y = df["completed"].astype(float)
 
@@ -79,27 +79,27 @@ def _fit_nb_pvalue(df, term, alpha_nb):
 def simulate_nb_dataset(
     N,
     rng,
-    rho_emp_ment=0.3,
+    rho_like_ment=0.3,
     b0_nb=1.0,
-    b_emp_nb=0.4,
+    b_like_nb=0.4,
     b_ment_nb=0.35,
     b_int_nb=0.20,
     alpha_nb=0.8,
 ):
-    emp, ment = _simulate_correlated_normals(N, rho_emp_ment, rng)
-    emp = _zscore(emp)
+    like, ment = _simulate_correlated_normals(N, rho_like_ment, rng)
+    like = _zscore(like)
     ment = _zscore(ment)
-    inter = emp * ment
+    inter = like * ment
 
-    lin = b0_nb + b_emp_nb * emp + b_ment_nb * ment + b_int_nb * inter
+    lin = b0_nb + b_like_nb * like + b_ment_nb * ment + b_int_nb * inter
     mu = np.exp(lin)
     completed = _nb2_rng(mu, alpha=alpha_nb, rng=rng).astype(int)
 
     return pd.DataFrame(
         {
-            "EMP": emp,
+            "LIKE": like,
             "MENT": ment,
-            "EMPxMENT": inter,
+            "LIKExMENT": inter,
             "completed": completed,
             "mu_true": mu,
         }
@@ -111,8 +111,8 @@ def run_power_nb(
     nsim=1000,
     alpha=0.05,
     seed=1,
-    rho_emp_ment=0.3,
-    b_emp=0.4,
+    rho_like_ment=0.3,
+    b_like=0.4,
     b_ment=0.35,
     b_int=0.20,
     b0_nb=1.0,
@@ -124,7 +124,7 @@ def run_power_nb(
     rows = []
 
     for N in N_values:
-        k_nb = {"EMP": 0, "MENT": 0, "EMPxMENT": 0}
+        k_nb = {"LIKE": 0, "MENT": 0, "LIKExMENT": 0}
         mean_completed = []
         mean_mu_true = []
 
@@ -135,9 +135,9 @@ def run_power_nb(
             df = simulate_nb_dataset(
                 N=N,
                 rng=r,
-                rho_emp_ment=rho_emp_ment,
+                rho_like_ment=rho_like_ment,
                 b0_nb=b0_nb,
-                b_emp_nb=b_emp,
+                b_like_nb=b_like,
                 b_ment_nb=b_ment,
                 b_int_nb=b_int,
                 alpha_nb=alpha_nb,
@@ -146,12 +146,12 @@ def run_power_nb(
             mean_completed.append(df["completed"].mean())
             mean_mu_true.append(df["mu_true"].mean())
 
-            for term in ("EMP", "MENT", "EMPxMENT"):
+            for term in ("LIKE", "MENT", "LIKExMENT"):
                 p = _fit_nb_pvalue(df, term, alpha_nb=alpha_nb)
                 if np.isfinite(p) and p < alpha:
                     k_nb[term] += 1
 
-        for term in ("EMP", "MENT", "EMPxMENT"):
+        for term in ("LIKE", "MENT", "LIKExMENT"):
             p_nb = k_nb[term] / nsim
             p_nb_low, p_nb_high = _binom_wilson_ci(k_nb[term], nsim, level=power_ci_level)
             rows.append(
@@ -166,10 +166,10 @@ def run_power_nb(
                     "power_ci_level": float(power_ci_level),
                     "mean_completed": float(np.mean(mean_completed)),
                     "mean_mu_true": float(np.mean(mean_mu_true)),
-                    "rho_emp_ment": float(rho_emp_ment),
+                    "rho_like_ment": float(rho_like_ment),
                     "b0_nb": float(b0_nb),
                     "alpha_nb": float(alpha_nb),
-                    "b_emp": float(b_emp),
+                    "b_like": float(b_like),
                     "b_ment": float(b_ment),
                     "b_int": float(b_int),
                 }
@@ -189,17 +189,17 @@ def run_power_nb(
         f.write("N_values: {}\n".format(list(N_values)))
         f.write("nsim: {}\n".format(nsim))
         f.write("alpha: {}\n".format(alpha))
-        f.write("rho_emp_ment: {}\n".format(rho_emp_ment))
+        f.write("rho_like_ment: {}\n".format(rho_like_ment))
         f.write("NB intercept b0_nb: {}\n".format(b0_nb))
         f.write("NB dispersion alpha_nb: {}\n".format(alpha_nb))
-        f.write("betas (EMP, MENT, INT): {}, {}, {}\n".format(b_emp, b_ment, b_int))
+        f.write("betas (LIKE, MENT, INT): {}, {}, {}\n".format(b_like, b_ment, b_int))
         f.write("\nMean outcomes by N:\n")
         f.write(df_out.groupby("N")[["mean_completed", "mean_mu_true"]].mean().to_string())
         f.write("\n\nPower table (NB):\n")
         f.write(df_out.pivot_table(index=["N"], columns=["term"], values=["power_nb"]).to_string())
         f.write("\n")
 
-    for term in ("EMP", "MENT", "EMPxMENT"):
+    for term in ("LIKE", "MENT", "LIKExMENT"):
         d = df_out[df_out["term"] == term].sort_values("N")
         x = d["N"].to_numpy()
         y = d["power_nb"].to_numpy()
@@ -222,8 +222,8 @@ def run_power_nb(
         plt.ylabel("Power")
         plt.title(
             "NB Power curve (term = {})\n"
-            "betas: EMP={}, MENT={}, INT={} | rho={} | nsim={}".format(
-                term, b_emp, b_ment, b_int, rho_emp_ment, nsim
+            "betas: LIKE={}, MENT={}, INT={} | rho={} | nsim={}".format(
+                term, b_like, b_ment, b_int, rho_like_ment, nsim
             )
         )
         plt.legend()
@@ -235,7 +235,7 @@ def run_power_nb(
     print("\n=== DONE ===")
     print("Saved CSV: {}".format(csv_path))
     print("Saved TXT: {}".format(txt_path))
-    print("Saved PNGs: 00_power_nb_curve_(EMP|MENT|EMPxMENT)_{}.png in {}\n".format(stamp, out_dir))
+    print("Saved PNGs: 00_power_nb_curve_(LIKE|MENT|LIKExMENT)_{}.png in {}\n".format(stamp, out_dir))
     print(df_out.pivot_table(index=["N"], columns=["term"], values=["power_nb"]).round(3))
     print("\nMean outcomes by N:")
     print(df_out.groupby("N")[["mean_completed", "mean_mu_true"]].mean().round(3))
@@ -247,12 +247,12 @@ if __name__ == "__main__":
     here = os.path.dirname(os.path.abspath(__file__))
 
     run_power_nb(
-        N_values=(50, 70, 90, 110, 130, 150),
-        nsim=1000,
+        N_values=(50, 70, 90, 110, 130, 150, 200, 250, 300),
+        nsim=10000,
         alpha=0.05,
         seed=1,
-        rho_emp_ment=0.3,
-        b_emp=0.4,
+        rho_like_ment=0.3,
+        b_like=0.4,
         b_ment=0.35,
         b_int=0.20,
         b0_nb=1.0,
