@@ -36,7 +36,17 @@ def p_logistic(x):
 # -----------------------
 # simulation core
 # -----------------------
-def simulate_one(rng, participant_number):
+def simulate_one(
+    rng,
+    participant_number,
+    beta_like=0.4,
+    beta_ment=0.35,
+    beta_interaction=0.2,
+    beta_fun=0.03,
+    beta_difficulty=-0.03,
+    outcome_intercept=3.2,
+    outcome_alpha=0.35,
+):
     exp_sid = uuid.uuid4().hex
 
     # demographics
@@ -48,14 +58,14 @@ def simulate_one(rng, participant_number):
     speed = rng.normal(0, 1)
     engagement = rng.normal(0, 1)
     anthro_trait = rng.normal(0, 1)  # drives IDAQ / some attitudes
-    empathy_trait = rng.normal(0, 1)
+    liking = rng.normal(0, 1)
 
     # -----------------------
     # captcha_pre
     # -----------------------
     captcha_pre_goal = 10
-    lam_extra = 7.0  # tweak: 5 -> ~15 attempts avg, 7 -> ~17 attempts avg, 8 -> ~18 avg
-    max_attempts = 35 # truncate extremes
+    lam_extra = 5.0  # tweak: 5 -> ~15 attempts avg, 7 -> ~17 attempts avg, 8 -> ~18 avg
+    max_attempts = 20 # truncate extremes
 
     p_correct_pre = p_logistic(0.8 * ability - 0.3)
 
@@ -79,19 +89,19 @@ def simulate_one(rng, participant_number):
     # -----------------------
     q_pre_captcha_total_time = rlognorm_bounded(rng, median=8.0, sigma=0.45, lo=8.0, hi=180.0)
 
-    # difficulty: higher when ability lower / RT higher
+    # Keep task appraisals relatively homogeneous to reflect a tuned task.
+    # They can still vary a little, but should not explain much outcome variance.
     q_pre_captcha_difficulty = rlikert_cont(
         rng,
-        mu=2.8 + 0.7 * (-ability) + 0.10 * (pre_mean_rt - 5.0),
-        sd=0.9,
+        mu=2.4 + 0.18 * (-ability) + 0.04 * (pre_mean_rt - 5.0),
+        sd=0.35,
         lo=1.0, hi=7.0
     )
 
-    # fun: higher when engagement/empathy higher, lower when difficulty higher
     q_pre_captcha_fun = rlikert_cont(
         rng,
-        mu=3.2 + 0.6 * empathy_trait + 0.3 * engagement - 0.5 * (q_pre_captcha_difficulty - 3.0),
-        sd=0.9,
+        mu=2.3 + 0.12 * liking + 0.05 * engagement - 0.10 * (q_pre_captcha_difficulty - 2.4),
+        sd=0.30,
         lo=1.0, hi=7.0
     )
 
@@ -103,7 +113,7 @@ def simulate_one(rng, participant_number):
     # two composites on 1-10
     q_pre_idaq = rlikert_cont(
         rng,
-        mu=5.0 + 1.2 * anthro_trait + 0.4 * empathy_trait,
+        mu=5.0 + 1.2 * anthro_trait + 0.4 * liking,
         sd=1.5,
         lo=1.0, hi=10.0
     )
@@ -115,7 +125,7 @@ def simulate_one(rng, participant_number):
 
     q_pre_2050_mean_futurism_score = rlikert_cont(
         rng,
-        mu=3.1 + 0.4 * empathy_trait + 0.25 * anthro_trait,
+        mu=3.1 + 0.4 * liking + 0.25 * anthro_trait,
         sd=0.7,
         lo=1.0, hi=10.0
     )
@@ -127,13 +137,13 @@ def simulate_one(rng, participant_number):
 
     q_post_gators_pos = rlikert_cont(
         rng,
-        mu=3.0 + 0.55 * empathy_trait + 0.35 * anthro_trait,
+        mu=3.0 + 0.55 * liking + 0.35 * anthro_trait,
         sd=0.75,
         lo=1.0, hi=6.0
     )
     q_post_gators_neg = rlikert_cont(
         rng,
-        mu=3.0 - 0.45 * empathy_trait - 0.20 * anthro_trait,
+        mu=3.0 - 0.45 * liking - 0.20 * anthro_trait,
         sd=0.75,
         lo=1.0, hi=6.0
     )
@@ -144,19 +154,19 @@ def simulate_one(rng, participant_number):
     q_post_specific_total_time = rlognorm_bounded(rng, median=8.0, sigma=0.50, lo=3.0, hi=180.0)
 
     # mentacy belief scale in [-6, 6], integer
-    # tends to be higher with anthro/empathy
-    mentacy_lat = 0.9 * anthro_trait + 0.3 * empathy_trait + rng.normal(0, 0.8)
+    # tends to be higher with anthro/liking
+    mentacy_lat = 0.9 * anthro_trait + 0.3 * liking + rng.normal(0, 0.8)
     mentacy_scaled = int(np.clip(round(mentacy_lat * 2.0), -6, 6))
     q_post_specific_mentacy_belief_scale = mentacy_scaled
 
     q_post_specific_likeability = rlikert_cont(
         rng,
-        mu=3.5 + 0.60 * empathy_trait + 0.25 * q_post_gators_pos - 0.15 * q_post_gators_neg,
+        mu=3.5 + 0.60 * liking + 0.25 * q_post_gators_pos - 0.15 * q_post_gators_neg,
         sd=0.7,
         lo=1.0, hi=7.0
     )
 
-    total_words = int(np.clip(round(rng.normal(180 + 45 * engagement + 25 * empathy_trait, 55)), 10, 650))
+    total_words = int(np.clip(round(rng.normal(180 + 45 * engagement + 25 * liking, 55)), 10, 650))
     spoken_turns = int(np.clip(round(rng.normal(9 + 1.5 * engagement, 2.0)), 2, 20))
     mean_words_per_turn = float(total_words) / float(spoken_turns)
     word_rate_wps = float(np.clip(rng.normal(2.2 + 0.20 * speed + 0.12 * engagement, 0.35), 0.7, 4.5))
@@ -165,14 +175,30 @@ def simulate_one(rng, participant_number):
     # -----------------------
     # captcha_post
     # -----------------------
-    captcha_post_goal = 1000
+    captcha_post_goal = 120
 
-    # attempts: allow true 0; driven by engagement, fun/value, difficulty
-    post_lambda = np.exp(1.0 + 0.55 * engagement + 0.20 * empathy_trait + 0.15 * (q_pre_captcha_fun - 3.0) - 0.20 * (q_pre_captcha_difficulty - 3.0))
-    post_attempts = int(np.clip(rng.poisson(lam=post_lambda), 0, 100))
+    # Primary hypothesis: post-task completions are driven by likeability,
+    # mentacy belief, and their interaction, with no meaningful engagement effect.
+    like_c = q_post_specific_likeability - 4.0
+    ment_c = q_post_specific_mentacy_belief_scale - np.mean([-6.0, 6.0])
+    like_x_ment = like_c * ment_c
+    fun_c = q_pre_captcha_fun - 2.3
+    difficulty_c = q_pre_captcha_difficulty - 2.4
 
-    p_correct_post = p_logistic(0.65 * ability - 0.2)  # a little harder/ noisier
-    post_completions = int(rng.binomial(post_attempts, p_correct_post)) if post_attempts > 0 else 0
+    post_log_mu = (
+        outcome_intercept
+        + beta_like * like_c
+        + beta_ment * ment_c
+        + beta_interaction * like_x_ment
+        + beta_fun * fun_c
+        + beta_difficulty * difficulty_c
+    )
+    post_mu = np.exp(post_log_mu)
+    gamma_shape = 1.0 / outcome_alpha
+    gamma_scale = outcome_alpha * post_mu
+    post_lambda = rng.gamma(shape=gamma_shape, scale=gamma_scale)
+    post_completions = int(np.clip(rng.poisson(lam=post_lambda), 0, captcha_post_goal))
+    post_attempts = int(np.clip(max(post_completions + rng.poisson(2.0), post_completions), 0, captcha_post_goal))
 
     post_mean_rt = float(np.clip(
         rng.lognormal(mean=np.log(5.8), sigma=0.45) * np.exp(-0.12 * speed) * (1.0 + 0.05 * (q_pre_captcha_difficulty - 3.0)),
@@ -227,14 +253,34 @@ def simulate_one(rng, participant_number):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--n", type=int, default=300)
+    ap.add_argument("--n", type=int, default=100)
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--out", type=str, default="simulated_simplified.csv")
+    ap.add_argument("--beta-like", type=float, default=0.4)
+    ap.add_argument("--beta-ment", type=float, default=0.35)
+    ap.add_argument("--beta-interaction", type=float, default=0.2)
+    ap.add_argument("--beta-fun", type=float, default=0.03)
+    ap.add_argument("--beta-difficulty", type=float, default=-0.03)
+    ap.add_argument("--outcome-intercept", type=float, default=3.2)
+    ap.add_argument("--outcome-alpha", type=float, default=0.35)
     args = ap.parse_args()
 
     rng = np.random.default_rng(args.seed)
 
-    rows = [simulate_one(rng, i + 1) for i in range(args.n)]
+    rows = [
+        simulate_one(
+            rng,
+            i + 1,
+            beta_like=args.beta_like,
+            beta_ment=args.beta_ment,
+            beta_interaction=args.beta_interaction,
+            beta_fun=args.beta_fun,
+            beta_difficulty=args.beta_difficulty,
+            outcome_intercept=args.outcome_intercept,
+            outcome_alpha=args.outcome_alpha,
+        )
+        for i in range(args.n)
+    ]
     df = pd.DataFrame(rows)
 
     # enforce exact column order matching your current simplified.csv

@@ -1,7 +1,11 @@
 import os
 import time
 import warnings
+from pathlib import Path
 
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import statsmodels.formula.api as smf
@@ -64,6 +68,71 @@ def _lr_compare(smaller, larger):
     return {"lr_stat": lr, "df_diff": df_diff, "p_value": p}
 
 
+def _plot_outcome_distribution(dat, out_path):
+    plt.figure(figsize=(7, 4.5))
+    plt.hist(dat[OUTCOME], bins=30, color="#2f5d8a", edgecolor="white")
+    plt.xlabel("Post-task completions")
+    plt.ylabel("Count")
+    plt.title("Distribution of post-task completions")
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=180)
+    plt.close()
+
+
+def _plot_primary_interaction_heatmap(dat, out_path):
+    like_bins = pd.qcut(dat["q_post_specific_likeability"], q=5, duplicates="drop")
+    ment_bins = pd.cut(dat["q_post_specific_mentacy_belief_scale"], bins=5, include_lowest=True)
+
+    heat = dat.pivot_table(
+        index=ment_bins,
+        columns=like_bins,
+        values=OUTCOME,
+        aggfunc="mean",
+        observed=False,
+    )
+
+    plt.figure(figsize=(8, 5))
+    im = plt.imshow(heat.to_numpy(), aspect="auto", cmap="YlGnBu", origin="lower")
+    plt.colorbar(im, label="Mean completions")
+    plt.xticks(range(len(heat.columns)), [str(c) for c in heat.columns], rotation=30, ha="right")
+    plt.yticks(range(len(heat.index)), [str(i) for i in heat.index])
+    plt.xlabel("Likeability bins")
+    plt.ylabel("Mentacy bins")
+    plt.title("Mean completions across likeability x mentacy")
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=180)
+    plt.close()
+
+
+def _plot_primary_irr(fit, out_path):
+    params = fit.params.drop(labels=["Intercept", "alpha"], errors="ignore")
+    conf = fit.conf_int().loc[params.index]
+
+    irr = np.exp(params)
+    irr_low = np.exp(conf[0])
+    irr_high = np.exp(conf[1])
+    order = irr.sort_values().index
+    y = np.arange(len(order))
+
+    plt.figure(figsize=(7, 4.5))
+    plt.errorbar(
+        irr.loc[order],
+        y,
+        xerr=[irr.loc[order] - irr_low.loc[order], irr_high.loc[order] - irr.loc[order]],
+        fmt="o",
+        color="#b24a2a",
+        ecolor="#444444",
+        capsize=3,
+    )
+    plt.axvline(1.0, linestyle="--", color="black", linewidth=1)
+    plt.yticks(y, order)
+    plt.xlabel("Incident Rate Ratio")
+    plt.title("Primary model effect sizes")
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=180)
+    plt.close()
+
+
 def run_nb_model_suite(csv_path, out_dir=None):
     if out_dir is None:
         out_dir = os.path.dirname(os.path.abspath(csv_path))
@@ -90,7 +159,7 @@ def run_nb_model_suite(csv_path, out_dir=None):
     dat["like_x_ment"] = dat["like_c"] * dat["ment_c"]
 
     formulas = {
-        "theory_primary_only": "{} ~ like_c + ment_c".format(OUTCOME),
+        "theory_primary_only": "{} ~ like_c + ment_c + like_x_ment".format(OUTCOME),
         "theory_plus_exploratory": (
             "{} ~ like_c + ment_c + like_x_ment + q_post_gators_pos + q_post_gators_neg + q_pre_idaq".format(OUTCOME)
         ),
@@ -160,6 +229,20 @@ def run_nb_model_suite(csv_path, out_dir=None):
         t.to_csv(p)
         irr_paths.append(p)
 
+    plot_paths = []
+    outcome_plot = os.path.join(out_dir, "5_nb_model_outcome_distribution_{}.png".format(stamp))
+    _plot_outcome_distribution(dat, outcome_plot)
+    plot_paths.append(outcome_plot)
+
+    interaction_plot = os.path.join(out_dir, "5_nb_model_like_x_ment_heatmap_{}.png".format(stamp))
+    _plot_primary_interaction_heatmap(dat, interaction_plot)
+    plot_paths.append(interaction_plot)
+
+    if "theory_primary_only" in fits:
+        irr_plot = os.path.join(out_dir, "5_nb_model_primary_irr_{}.png".format(stamp))
+        _plot_primary_irr(fits["theory_primary_only"], irr_plot)
+        plot_paths.append(irr_plot)
+
     summary_txt = os.path.join(out_dir, "5_nb_model_summary_{}.txt".format(stamp))
     with open(summary_txt, "w") as f:
         f.write("Negative Binomial Model Suite\n")
@@ -196,6 +279,8 @@ def run_nb_model_suite(csv_path, out_dir=None):
     print("- {}".format(summary_txt))
     for p in irr_paths:
         print("- {}".format(p))
+    for p in plot_paths:
+        print("- {}".format(p))
     if errors:
         print("\nSome models failed:")
         for k, v in errors.items():
@@ -215,10 +300,12 @@ def run_nb_model_suite(csv_path, out_dir=None):
         "comparison_csv": cmp_csv,
         "summary_txt": summary_txt,
         "irr_csvs": irr_paths,
+        "plots": plot_paths,
     }
 
 
 if __name__ == "__main__":
     here = os.path.dirname(os.path.abspath(__file__))
-    default_csv = os.path.join(here, "2_simplified.csv")
-    run_nb_model_suite(default_csv, out_dir=here)
+    output = os.path.join(here, "5_nb_models")
+    default_csv = os.path.join(here, "simulated_simplified.csv")
+    run_nb_model_suite(default_csv, out_dir=output)
