@@ -8,7 +8,7 @@
   "captcha_feedback_mode": "word_flash",
   "captcha_feedback_right_ms": 1000,
   "captcha_feedback_wrong_ms": 2000,
-  "trickclicks_enabled": true,
+  "trickclicks_enabled": false,
   "trickclicks_tile_counts_by_clicks": {
     "1": 4,
     "2": 2,

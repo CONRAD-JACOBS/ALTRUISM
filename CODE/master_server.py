@@ -28,6 +28,37 @@ TEST_BYPASS_ROBOT_COMMANDS = False
 # In robot stage:
 # Press Enter to stop the alert sound. Press Ctrl+Enter to advance manually.
 
+
+def get_startup_config_warning():
+    warnings = []
+
+    if TEST_AUTO_FILL is not False:
+        warnings.append("TEST_AUTO_FILL is {} (expected False)".format(TEST_AUTO_FILL))
+
+    if TEST_BYPASS_ROBOT_COMMANDS is not False:
+        warnings.append(
+            "TEST_BYPASS_ROBOT_COMMANDS is {} (expected False)".format(TEST_BYPASS_ROBOT_COMMANDS)
+        )
+
+    pre_config_path = BASE / "local_captcha" / "configs" / "pre_config.json"
+    try:
+        pre_cfg = json.loads(pre_config_path.read_text(encoding="utf-8"))
+        goal_correct = pre_cfg.get("goal_correct")
+        if goal_correct != 10:
+            warnings.append(
+                'pre_config.json "goal_correct" is {} (expected 10)'.format(goal_correct)
+            )
+    except Exception as exc:
+        warnings.append("Could not read pre_config.json: {}".format(exc))
+
+    if not warnings:
+        return None
+
+    return (
+        "Warning: troubleshooting settings are active for this session.\n\n"
+        + "\n".join("- {}".format(item) for item in warnings)
+    )
+
 def launch_robot_stack():
     if sys.platform != "darwin":
         print("WARN: Robot stack launcher is macOS-only.")
@@ -761,6 +792,8 @@ def create_new_experiment_session(participant_number, age, gender, results_dir):
         "csv_path": str(csv_path),
         "jsonl_path": str(jsonl_path),
         "watchdog_total": 0,
+        "startup_warning": get_startup_config_warning(),
+        "startup_warning_shown": False,
     }
     return exp_sid, EXP_SESSIONS[exp_sid]
 
@@ -812,6 +845,8 @@ def get_or_create_experiment_session(participant_number, age, gender, results_di
         "csv_path": str(csv_path),
         "jsonl_path": str(jsonl_path),
         "watchdog_total": 0,
+        "startup_warning": get_startup_config_warning(),
+        "startup_warning_shown": False,
     }
     return exp_sid, EXP_SESSIONS[exp_sid]
 

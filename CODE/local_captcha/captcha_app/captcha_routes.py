@@ -270,6 +270,7 @@ def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, conf
     def stage_captcha_page():
         exp_sid, exp = get_exp()
         sess = get_stage_state(exp_sid, exp)
+        startup_warning = None
 
         # WRITE ONE ROW ON FIRST ENTRY
         if not sess.get("entered"):
@@ -284,6 +285,14 @@ def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, conf
                 captcha_index=0,
             )
 
+        if (
+            stage_id == "captcha_pre"
+            and exp.get("startup_warning")
+            and not exp.get("startup_warning_shown", False)
+        ):
+            startup_warning = exp["startup_warning"]
+            exp["startup_warning_shown"] = True
+
         return render_template(
             "index.html",
             prompt_text=sess["prompt_text"],
@@ -296,6 +305,7 @@ def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, conf
             captcha_feedback_wrong_ms=CFG["captcha_feedback_wrong_ms"],
             show_competition_scoreboard=CFG["show_competition_scoreboard"],
             competition_scores=CFG["competition_scores"],
+            startup_warning=startup_warning,
         )
 
 

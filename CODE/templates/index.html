@@ -160,6 +160,13 @@
       })();
     </script>
   {% endif %}
+  {% if startup_warning %}
+    <script>
+      window.addEventListener("load", function () {
+        alert({{ startup_warning | tojson }});
+      });
+    </script>
+  {% endif %}
   <script src="/static/app.js"></script>
 </body>
 </html>

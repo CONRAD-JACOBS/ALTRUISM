@@ -1,0 +1,10 @@
+{
+  "watchdog_mode": true, 
+  "watchdog_interval_sec": 13.0, 
+  "watchdog_consecutive_without_user": 2, 
+  "watchdog_activate_after_turn": 2, 
+  "watchdog_enabled": true, 
+  "watchdog_total": 4, 
+  "updated_at": "2026-03-31T11:14:32", 
+  "watchdog_max_consecutive_without_user": 2
+}

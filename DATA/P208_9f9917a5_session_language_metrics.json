@@ -1,0 +1,10 @@
+{
+  "spoken_turn_count": 21, 
+  "total_speaking_time_sec": 129.178125, 
+  "mean_latency_sec": 12.405285714285716, 
+  "mean_words_per_turn": 14.380952380952381, 
+  "word_rate_wps": 2.3378571255775698, 
+  "latency_turn_count": 21, 
+  "total_words": 302, 
+  "updated_at": "2026-03-31T14:13:51"
+}
