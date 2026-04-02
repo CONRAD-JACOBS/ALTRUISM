@@ -310,12 +310,24 @@ def load_session_language_metrics(data_dir):
             "total_words": pd.to_numeric(payload.get("total_words"), errors="coerce"),
             "mean_words_per_turn": pd.to_numeric(payload.get("mean_words_per_turn"), errors="coerce"),
             "word_rate_wps": pd.to_numeric(payload.get("word_rate_wps"), errors="coerce"),
+            "robot_total_words": pd.to_numeric(payload.get("robot_total_words"), errors="coerce"),
+            "robot_mean_words_per_turn": pd.to_numeric(payload.get("robot_mean_words_per_turn"), errors="coerce"),
+            "robot_word_rate_wps": pd.to_numeric(payload.get("robot_word_rate_wps"), errors="coerce"),
             "mean_latency_sec": pd.to_numeric(payload.get("mean_latency_sec"), errors="coerce"),
         })
 
     if not rows:
         return pd.DataFrame(
-            columns=["exp_sid", "total_words", "mean_words_per_turn", "word_rate_wps", "mean_latency_sec"]
+            columns=[
+                "exp_sid",
+                "total_words",
+                "mean_words_per_turn",
+                "word_rate_wps",
+                "robot_total_words",
+                "robot_mean_words_per_turn",
+                "robot_word_rate_wps",
+                "mean_latency_sec",
+            ]
         )
 
     metrics_df = pd.DataFrame(rows)

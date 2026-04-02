@@ -162,6 +162,9 @@ def copy_robot_session_artifacts(exp_sid, exp):
         "total_words": None,
         "mean_words_per_turn": None,
         "word_rate_wps": None,
+        "robot_total_words": None,
+        "robot_mean_words_per_turn": None,
+        "robot_word_rate_wps": None,
         "mean_latency_sec": None,
     }
 
@@ -191,6 +194,9 @@ def copy_robot_session_artifacts(exp_sid, exp):
                     metadata["total_words"] = summary.get("total_words")
                     metadata["mean_words_per_turn"] = summary.get("mean_words_per_turn")
                     metadata["word_rate_wps"] = summary.get("word_rate_wps")
+                    metadata["robot_total_words"] = summary.get("robot_total_words")
+                    metadata["robot_mean_words_per_turn"] = summary.get("robot_mean_words_per_turn")
+                    metadata["robot_word_rate_wps"] = summary.get("robot_word_rate_wps")
                     metadata["mean_latency_sec"] = summary.get("mean_latency_sec")
                 except Exception as exc:
                     print("WARN: Failed parsing session language metrics {}: {}".format(src, exc))
