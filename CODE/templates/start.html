@@ -105,18 +105,7 @@
   <div class="card">
     <h2>Participant details</h2>
 
-    <form method="POST" action="/">
-
-      <label for="participant_number">Participant number</label>
-      <input
-        id="participant_number"
-        name="participant_number"
-        type="number"
-        min="1"
-        step="1"
-        required
-        autofocus
-      />
+    <form method="POST" action="/participant-start">
 
       <label for="age">Age</label>
       <input
@@ -126,6 +115,7 @@
         min="1"
         step="1"
         required
+        autofocus
       />
 
       <label>Gender</label>

@@ -1,0 +1,20 @@
+{
+  "exp_sid": "87b94bb435364010bf598c0a1b55f257",
+  "participant_number": 215,
+  "copied_at": "2026-04-02T16:16:01.562",
+  "source_session_dir": "/Users/socialneurolab/Documents/repos/voice-llm-chat/src/../sessions/session_20260402_155355",
+  "copied_files": [
+    "P215_87b94bb4_session_dialogue.txt",
+    "P215_87b94bb4_watchdog_summary.json",
+    "P215_87b94bb4_session_language_metrics.json"
+  ],
+  "watchdog_total": 1,
+  "total_words": 271,
+  "mean_words_per_turn": 12.904761904761905,
+  "word_rate_wps": 2.2805868724244123,
+  "robot_total_words": 1081,
+  "robot_mean_words_per_turn": 51.476190476190474,
+  "robot_word_rate_wps": 2.518952948982384,
+  "mean_latency_sec": 7.595523809523808,
+  "status": "ok"
+}

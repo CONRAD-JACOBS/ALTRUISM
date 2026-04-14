@@ -307,5 +307,5 @@ def run_nb_model_suite(csv_path, out_dir=None):
 if __name__ == "__main__":
     here = os.path.dirname(os.path.abspath(__file__))
     output = os.path.join(here, "5_nb_models")
-    default_csv = os.path.join(here, "simulated_simplified.csv")
+    default_csv = os.path.join(here, "2_simplified.csv")
     run_nb_model_suite(default_csv, out_dir=output)

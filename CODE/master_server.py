@@ -748,6 +748,7 @@ app = Flask(
 )
 
 EXP_SESSIONS = {}  # exp_sid -> dict with participant, csv_path, jsonl_path, etc.
+PENDING_STARTS = {}  # pending_sid -> participant_number entered by experimenter
 
 import uuid
 from datetime import datetime
@@ -888,21 +889,39 @@ register_captcha_routes(
 # --- Global routes ---
 
 @app.route("/", methods=["GET", "POST"])
-def home():
+def experimenter_start():
     if request.method == "GET":
-        return render_template("start.html", error=None)
+        return render_template("experimenter_start.html", error=None)
 
     raw = (request.form.get("participant_number") or "").strip()
     if raw == "":
-        return render_template("start.html", error="Please enter a participant number.")
+        return render_template("experimenter_start.html", error="Please enter a participant number.")
 
     try:
         participant_number = int(raw)
         if participant_number <= 0:
             raise ValueError()
     except ValueError:
-        return render_template("start.html", error="Participant number must be a positive whole number.")
-    
+        return render_template("experimenter_start.html", error="Participant number must be a positive whole number.")
+
+    pending_sid = uuid.uuid4().hex
+    PENDING_STARTS[pending_sid] = participant_number
+
+    resp = make_response(redirect("/participant-start"))
+    resp.set_cookie("pending_exp_start", pending_sid, samesite="Lax")
+    return resp
+
+
+@app.route("/participant-start", methods=["GET", "POST"])
+def participant_start():
+    pending_sid = request.cookies.get("pending_exp_start")
+    participant_number = PENDING_STARTS.get(pending_sid)
+    if participant_number is None:
+        return redirect("/")
+
+    if request.method == "GET":
+        return render_template("start.html", error=None)
+
     raw = (request.form.get("age") or "").strip()
     try:
         age = int(raw)
@@ -911,18 +930,22 @@ def home():
     except ValueError:
         return render_template("start.html", error="Age must be a positive whole number.")
 
-    gender = request.form["gender"]
+    gender = (request.form.get("gender") or "").strip()
+    if gender not in {"male", "female", "other"}:
+        return render_template("start.html", error="Please select a gender.")
 
     exp_sid, exp = create_new_experiment_session(
-    participant_number=participant_number,
-    age=age,
-    gender=gender,
-    results_dir=HYPERBASE / "DATA"
-)
+        participant_number=participant_number,
+        age=age,
+        gender=gender,
+        results_dir=HYPERBASE / "DATA"
+    )
 
+    PENDING_STARTS.pop(pending_sid, None)
 
     resp = make_response(redirect("/stage/captcha_pre"))
     resp.set_cookie("exp_session", exp_sid, samesite="Lax")
+    resp.delete_cookie("pending_exp_start")
     return resp
 
 @app.route("/stage/q_pre_captcha", methods=["GET"])
