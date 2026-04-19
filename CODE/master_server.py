@@ -1287,11 +1287,13 @@ def q_post_submit():
 
 @app.route("/done")
 def done():
-    return (
-        "<div style='min-height:100vh;display:flex;align-items:center;justify-content:center;'>"
-        "<h2>All done. <br>Your data has been saved. <br> Please inform the experimenter.</h2>"
-        "</div>"
-    )
+    notification_path = BASE / "audio" / "notification.mp3"
+    notification_url = None
+    if notification_path.exists():
+        notification_url = "/audio/notification.mp3"
+    else:
+        print("WARN: Optional done-stage notification audio missing: {}".format(notification_path))
+    return render_template("done.html", notification_url=notification_url)
 
 
 
