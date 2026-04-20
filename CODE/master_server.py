@@ -64,22 +64,43 @@ def launch_robot_stack():
         print("WARN: Robot stack launcher is macOS-only.")
         return
 
+    # Keep ALTRUISM isolated from the machine-wide active UQ profile.
+    # Other experiments can keep operator-gated speech in active_project.txt.
+    altruism_env = (
+        "UQ_PROJECT_ID=altruism "
+        "NAO_REQUIRE_ENTER_BEFORE_SPEAK=0 "
+        "NAO_REQUIRE_ENTER_FOR_WATCHDOG=0 "
+        "NAO_OPERATOR_REPLY_DELAY_ENABLED=0 "
+        "VOICE_LLM_CHAT_MODE=robot_chat "
+        "VOICE_LLM_CHAT_REQUIRE_ENTER_BEFORE_SPEAK=0 "
+        "VOICE_LLM_CHAT_REQUIRE_ENTER_FOR_WATCHDOG=0 "
+        "VOICE_LLM_CHAT_OPERATOR_REPLY_DELAY_ENABLED=0"
+    )
+
     script = """tell application "Terminal"
     activate
     delay 0.2
 
     -- Window 1: uq-neuro-nao Py3 server (create window by running the real command)
-    do script "clear; echo '=== UQ-NEURO-NAO Py3 (src_py3.app) ==='; cd {}/uq-neuro-nao && PY3_API_PORT=5001 UQ_PY3_VERBOSE=0 PY3_API_DEBUG=0 /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 -m src_py3.app"
+    do script "clear; echo '=== UQ-NEURO-NAO Py3 (src_py3.app) ==='; cd {}/uq-neuro-nao && {} PY3_API_PORT=5001 UQ_PY3_VERBOSE=0 PY3_API_DEBUG=0 /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 -m src_py3.app"
     delay 0.2                                                      
 
     -- Window 2: bridge_server (prep runs here; no separate PREP window)
-    do script "clear; echo '=== VOICE-LLM-CHAT BRIDGE (src.bridge_server) ==='; rm -f {}/voice-llm-chat/sessions/CURRENT_SESSION.txt; echo 'Removed CURRENT_SESSION.txt (if it existed).'; cd {}/voice-llm-chat && BRIDGE_VERBOSE=0 ./.venv/bin/python -m src.bridge_server"
+    do script "clear; echo '=== VOICE-LLM-CHAT BRIDGE (src.bridge_server) ==='; rm -f {}/voice-llm-chat/sessions/CURRENT_SESSION.txt; echo 'Removed CURRENT_SESSION.txt (if it existed).'; cd {}/voice-llm-chat && {} BRIDGE_VERBOSE=0 ./.venv/bin/python -m src.bridge_server"
     delay 0.2
 
     -- Window 3: Py2 worker (wait for bridge port before starting)
-    do script "clear; echo '=== UQ-NEURO-NAO Py2 (run_chat_with_bumper) ==='; echo 'Waiting for bridge_server on 127.0.0.1:5055...'; until /usr/bin/nc -z 127.0.0.1 5055; do sleep 0.2; done; echo 'Bridge is up. Launching Py2 worker.'; cd {}/uq-neuro-nao && NAO_WORKER_VERBOSE=0 /Library/Frameworks/Python.framework/Versions/2.7/bin/python -m src_py2.main.run_chat_with_bumper"
+    do script "clear; echo '=== UQ-NEURO-NAO Py2 (run_chat_with_bumper) ==='; echo 'Waiting for bridge_server on 127.0.0.1:5055...'; until /usr/bin/nc -z 127.0.0.1 5055; do sleep 0.2; done; echo 'Bridge is up. Launching Py2 worker.'; cd {}/uq-neuro-nao && {} NAO_WORKER_VERBOSE=0 /Library/Frameworks/Python.framework/Versions/2.7/bin/python -m src_py2.main.run_chat_with_bumper"
 end tell
-""".format(HYPERHYPERBASE, HYPERHYPERBASE, HYPERHYPERBASE, HYPERHYPERBASE)
+""".format(
+        HYPERHYPERBASE,
+        altruism_env,
+        HYPERHYPERBASE,
+        HYPERHYPERBASE,
+        altruism_env,
+        HYPERHYPERBASE,
+        altruism_env,
+    )
     try:
         subprocess.Popen(["osascript", "-e", script])
     except Exception as exc:

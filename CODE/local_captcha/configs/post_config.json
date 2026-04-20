@@ -15,7 +15,7 @@
     "Zeke": 233,
     "zork": 218
   },
-  "trickclicks_enabled": false,
+  "trickclicks_enabled": true,
   "trickclicks_tile_counts_by_clicks": {
     "1": 4,
     "2": 2,

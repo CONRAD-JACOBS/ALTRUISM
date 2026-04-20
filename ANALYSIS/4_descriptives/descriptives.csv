@@ -1,11 +1,15 @@
 TOPLINE
 n_rows,completions_nonmissing,time_nonmissing,n_zero_completion,pct_zero_completion,"corr(time, completions)"
-4,4,4,2,50.0,0.9300583976587692
+100,100,100,0,0.0,0.8022545985075552
 
 MISSINGNESS_TABLE
 column,n_missing,prop_missing
-captcha_post_mean_rt,2,0.5
-q_pre_captcha_total_time,0,0.0
+exp_sid,0,0.0
+q_pre_captcha_difficulty,0,0.0
+word_rate_wps,0,0.0
+mean_words_per_turn,0,0.0
+total_words,0,0.0
+q_post_specific_likeability,0,0.0
 q_post_specific_mentacy_belief_scale,0,0.0
 q_post_specific_total_time,0,0.0
 q_post_gators_neg,0,0.0
@@ -15,10 +19,10 @@ q_pre_2050_mean_futurism_score,0,0.0
 q_pre_2050_total_time,0,0.0
 q_pre_idaq,0,0.0
 q_pre_idaq_total_time,0,0.0
-q_pre_captcha_difficulty,0,0.0
 q_pre_captcha_fun,0,0.0
-exp_sid,0,0.0
 participant_number,0,0.0
+q_pre_captcha_total_time,0,0.0
+captcha_post_mean_rt,0,0.0
 captcha_post_total_time,0,0.0
 captcha_post_goal,0,0.0
 captcha_post_completions,0,0.0
@@ -30,4 +34,4 @@ captcha_pre_completions,0,0.0
 captcha_pre_attempts,0,0.0
 gender,0,0.0
 age,0,0.0
-q_post_specific_empathy,0,0.0
+mean_latency_sec,0,0.0

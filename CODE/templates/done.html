@@ -18,18 +18,35 @@
   </style>
 </head>
 <body>
-  <h2>All done. <br>Your data has been saved. <br> Please inform the experimenter.</h2>
+  <h2>All done. <br>Your data has been saved.</h2>
 
   <script>
     const notificationUrl = {{ notification_url|tojson }};
+    let notificationAudio = null;
+
+    function stopNotification() {
+      if (!notificationAudio) return;
+      notificationAudio.pause();
+      notificationAudio.currentTime = 0;
+      notificationAudio.loop = false;
+      notificationAudio.src = "";
+      notificationAudio.load();
+      notificationAudio = null;
+    }
 
     if (notificationUrl) {
-      const notificationAudio = new Audio(notificationUrl);
+      notificationAudio = new Audio(notificationUrl);
       notificationAudio.loop = true;
       notificationAudio.play().catch((err) => {
         console.warn("Done-stage notification audio could not autoplay:", err);
       });
     }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        stopNotification();
+      }
+    });
   </script>
 </body>
 </html>

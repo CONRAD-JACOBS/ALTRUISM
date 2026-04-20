@@ -311,6 +311,14 @@ async function submitCaptcha() {
   }
 
   if (data.done) {
+    if (STAGE === "captcha_pre" && !data.timed_out) {
+      setStats(data.total_correct);
+      updatePreStageLock(data.total_correct, data.goal_correct);
+      hideWordFlash();
+      clearFeedback();
+      return;
+    }
+
     feedbackEl.textContent = data.timed_out ? "Time is up. Continuing…" : "Finished. Continuing…";
     await finishStage(
       data.timed_out ? "stage_timeout" : "stage_finish",

@@ -58,29 +58,7 @@
   <div class="container">
     <h1>Instructions</h1>
 
-    <p>
-      To advance to the next part of the experiment you must successfully complete 10 visual recognition tasks.
-    </p>
-
-    <p>
-      On each screen, you will see a grid of images.
-    </p>
-
-    <p>
-      Each grid contains a few images containing bicycles.
-    </p>
-
-    <p>
-      Click on all the bicycle images to highlight them and then click "Submit" to record an attempt.
-    </p>
-
-    <p>
-      You will see your current score in the top right corner.
-    </p>
-
-    <p>
-      Your score must reach 10 before you can advance to the next part of the experiment.
-    </p>
+    {% include "_captcha_pre_instructions_body.html" %}
 
     <div class="button-container">
       <button onclick="beginTask()">Begin</button>

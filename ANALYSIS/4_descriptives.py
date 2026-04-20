@@ -13,9 +13,9 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-INFILE = ROOT / "ANALYSIS" / "2_simplified.csv"  
+INFILE = ROOT / "ANALYSIS" / "simulated_simplified.csv"  
 #INFILE = ROOT / "ANALYSIS" / "simulated_simplified.csv"   # change if needed
-OUTDIR = ROOT / "ANALYSIS" / "descriptives"
+OUTDIR = ROOT / "ANALYSIS" / "4_descriptives"
 
 # Columns to use for the sanity checks (adjust if you rename)
 COMPLETIONS_COL = "captcha_post_completions"
