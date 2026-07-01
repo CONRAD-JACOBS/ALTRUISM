@@ -1,0 +1,25 @@
+DFBETAS / leave-one-out purification
+input: /Users/neurorobots/Desktop/repos/ALTRUISM/ANALYSIS/2_simplified.csv
+output: /Users/neurorobots/Desktop/repos/ALTRUISM/ANALYSIS/3_purified.csv
+rows_in_input: 99
+rows_used_for_primary_model: 99
+rows_in_purified_output: 95
+formula: captcha_post_completions ~ like_c + ment_c + like_x_ment
+centering_likeability_mean: 5.5353535353535355
+centering_mentacy_mean: -1.6767676767676767
+thresholds: {'LIKING': 0.5, 'MENT': 0.5, 'LIKINGxMENT': 0.5}
+excluded_participant_count: 4
+
+Full model coefficients
+Intercept      2.731361
+like_c         0.238885
+ment_c         0.058054
+like_x_ment   -0.037882
+alpha          0.674828
+
+Excluded participants
+                         exp_sid  participant_number
+d14543fe53d641f3af028e703af3092c                  51
+b09679120fe74756b97eb9314a75dec4                  76
+cc291a6ebaf34cdb8741a0b0fc736589                  78
+51fdf791ec3446e99d9b0ed31790ea8e                  98

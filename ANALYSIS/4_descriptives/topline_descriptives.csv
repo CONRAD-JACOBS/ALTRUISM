@@ -1,2 +1,2 @@
 n_rows,completions_nonmissing,time_nonmissing,n_zero_completion,pct_zero_completion,"corr(time, completions)"
-57,57,57,0,0.0,0.9725664036554602
+99,99,99,2,2.0202020202020203,0.9629248036403377
