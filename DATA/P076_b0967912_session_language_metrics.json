@@ -1,0 +1,15 @@
+{
+  "spoken_turn_count": 0, 
+  "mean_words_per_turn": null, 
+  "total_words": 0, 
+  "updated_at": "2026-06-02T11:05:36", 
+  "total_speaking_time_sec": 0.0, 
+  "mean_latency_sec": null, 
+  "latency_turn_count": 0, 
+  "robot_total_words": 0, 
+  "word_rate_wps": null, 
+  "robot_word_rate_wps": null, 
+  "robot_spoken_turn_count": 0, 
+  "robot_total_speaking_time_sec": 0.0, 
+  "robot_mean_words_per_turn": null
+}

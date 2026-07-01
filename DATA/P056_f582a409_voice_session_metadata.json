@@ -1,0 +1,25 @@
+{
+  "exp_sid": "f582a4098ccc4e26a3e07ae72b71605f",
+  "participant_number": 56,
+  "copied_at": "2026-05-21T13:58:23.524",
+  "source_session_dir": "/Users/neurorobots/Desktop/repos/voice-llm-chat/src/../sessions/session_20260521_133552",
+  "copied_files": [
+    "P056_f582a409_session_dialogue.txt",
+    "P056_f582a409_master_server_events.jsonl",
+    "P056_f582a409_bridge_events.jsonl",
+    "P056_f582a409_bumper_events.jsonl",
+    "P056_f582a409_robot_diagnostics.jsonl",
+    "P056_f582a409_watchdog_summary.json",
+    "P056_f582a409_session_end_summary.json",
+    "P056_f582a409_session_language_metrics.json"
+  ],
+  "watchdog_total": 0,
+  "total_words": 232,
+  "mean_words_per_turn": 12.88888888888889,
+  "word_rate_wps": 1.89926526268394,
+  "robot_total_words": 1038,
+  "robot_mean_words_per_turn": 57.666666666666664,
+  "robot_word_rate_wps": 2.6718355513411747,
+  "mean_latency_sec": 12.935611111111111,
+  "status": "ok"
+}

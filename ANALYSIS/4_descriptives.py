@@ -13,7 +13,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-INFILE = ROOT / "ANALYSIS" / "simulated_simplified.csv"  
+INFILE = ROOT / "ANALYSIS" / "2_simplified.csv"  
 #INFILE = ROOT / "ANALYSIS" / "simulated_simplified.csv"   # change if needed
 OUTDIR = ROOT / "ANALYSIS" / "4_descriptives"
 
@@ -146,12 +146,14 @@ def main():
         "captcha_post_mean_rt",
         "q_pre_captcha_fun",
         "q_pre_captcha_difficulty",
+        "q_pre_captcha_meaningfulness",
         "q_pre_idaq",
         "q_pre_2050_mean_futurism_score",
         "q_post_gators_pos",
         "q_post_gators_neg",
         "q_post_specific_mentacy_belief_scale",
         "q_post_specific_likeability",
+        "q_post_specific_robot_empathy",
     ]
 
     numeric_df = df[NUM_ROWS].copy()
@@ -194,6 +196,8 @@ def main():
     with open(combined_path, "w", encoding="utf-8") as f:
         f.write("TOPLINE\n")
         topline.to_csv(f, index=False)
+        f.write("\nNUMERIC_DESCRIBE_TABLE\n")
+        desc.to_csv(f)
         f.write("\nMISSINGNESS_TABLE\n")
         missing_table.to_csv(f, index=False)
 

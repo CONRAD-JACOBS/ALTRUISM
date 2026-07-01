@@ -127,6 +127,7 @@ def summarize_questionnaire_stage(df, stage_id):
 
         comp_1 = None
         comp_2 = None
+        extra_values = {}
 
         # ---------- q_pre_captcha ----------
         if stage_id == "q_pre_captcha":
@@ -141,6 +142,11 @@ def summarize_questionnaire_stage(df, stage_id):
             fun_vals = [float(responses[k]) for k in fun_keys if k in responses]
             comp_1 = stats.mean(fun_vals) if fun_vals else None
             comp_2 = float(responses.get("captcha_task_difficulty")) if "captcha_task_difficulty" in responses else None
+            extra_values[f"{stage_id}_meaningfulness"] = (
+                float(responses.get("captcha_task_meaningfulness"))
+                if "captcha_task_meaningfulness" in responses
+                else None
+            )
 
         # ---------- q_pre_idaq ----------
         elif stage_id == "q_pre_idaq":
@@ -236,6 +242,11 @@ def summarize_questionnaire_stage(df, stage_id):
             comp_1 = sign * (float(conf) - 1) if conf is not None else None
 
             comp_2 = float(responses.get("robot_likeability")) if "robot_likeability" in responses else None
+            extra_values[f"{stage_id}_robot_empathy"] = (
+                float(responses.get("robot_empathy"))
+                if "robot_empathy" in responses
+                else None
+            )
 
         else:
             raise ValueError(f"Unknown questionnaire stage: {stage_id}")
@@ -243,19 +254,23 @@ def summarize_questionnaire_stage(df, stage_id):
         if comp_2_name == None: 
             comp_1_col = stage_id if comp_1_name is None else f"{stage_id}_{comp_1_name}"
 
-            return pd.Series({
+            row = {
                 "exp_sid": exp_sid,
                 f"{stage_id}_total_time": total_time,
                 comp_1_col: comp_1,
-                })     
+                }
+            row.update(extra_values)
+            return pd.Series(row)     
 
         else: 
-            return pd.Series({
+            row = {
                 "exp_sid": exp_sid,
                 f"{stage_id}_total_time": total_time,
                 f"{stage_id}_{comp_1_name}": comp_1,
                 f"{stage_id}_{comp_2_name}": comp_2,
-                })
+                }
+            row.update(extra_values)
+            return pd.Series(row)
 
     rows = [agg_one(g) for _, g in d.groupby("exp_sid", sort=False)]
     if not rows:

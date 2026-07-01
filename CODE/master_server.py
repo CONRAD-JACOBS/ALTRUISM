@@ -15,16 +15,24 @@ BASE = Path(__file__).resolve().parent
 HYPERBASE = Path(__file__).resolve().parent.parent
 HYPERHYPERBASE = Path(__file__).resolve().parent.parent.parent
 VOICE_CHAT_SESSIONS_DIR = HYPERHYPERBASE / "voice-llm-chat" / "sessions"
+VOICE_CHAT_ROBOT_STATUS_PATH = VOICE_CHAT_SESSIONS_DIR / "ROBOT_STATUS.json"
 ALTRUISM_DATA_DIR = HYPERBASE / "DATA"
 VOICE_CHAT_ARTIFACTS = (
     "session_dialogue.txt",
     "conversation_log.jsonl",
+    "master_server_events.jsonl",
+    "bridge_events.jsonl",
+    "bumper_events.jsonl",
+    "robot_diagnostics.jsonl",
+    "watchdog_events.jsonl",
     "watchdog_summary.json",
+    "session_end_summary.json",
     "session_language_metrics.json",
 )
 
 TEST_AUTO_FILL = False
 TEST_BYPASS_ROBOT_COMMANDS = False
+EMERGENCY_BYPASS_PRE_CONVERSATION = False
 # In robot stage:
 # Press Enter to stop the alert sound. Press Ctrl+Enter to advance manually.
 
@@ -38,6 +46,13 @@ def get_startup_config_warning():
     if TEST_BYPASS_ROBOT_COMMANDS is not False:
         warnings.append(
             "TEST_BYPASS_ROBOT_COMMANDS is {} (expected False)".format(TEST_BYPASS_ROBOT_COMMANDS)
+        )
+
+    if EMERGENCY_BYPASS_PRE_CONVERSATION is not False:
+        warnings.append(
+            "EMERGENCY_BYPASS_PRE_CONVERSATION is {} (expected False)".format(
+                EMERGENCY_BYPASS_PRE_CONVERSATION
+            )
         )
 
     pre_config_path = BASE / "local_captcha" / "configs" / "pre_config.json"
@@ -108,9 +123,23 @@ end tell
 
 
 def schedule_robot_say_via_py2(text, delay_sec=5.0):
+    _append_master_robot_event({
+        "event": "system_say_timer_scheduled",
+        "source": "master_server_delayed_prompt",
+        "delay_sec": float(delay_sec),
+        "text": text,
+    })
+
     def _task():
         session_dir = get_latest_voice_chat_session_dir()
         if not session_dir:
+            _append_master_robot_event({
+                "event": "system_say_enqueue_failed",
+                "reason": "no_active_voice_chat_session",
+                "source": "master_server_delayed_prompt",
+                "delay_sec": float(delay_sec),
+                "text": text,
+            })
             print("WARN: No active voice-chat session found for delayed robot speech.")
             return
 
@@ -122,6 +151,7 @@ def schedule_robot_say_via_py2(text, delay_sec=5.0):
             "text": text,
             "created_at": datetime.now().isoformat(timespec="seconds"),
             "source": "master_server_delayed_prompt",
+            "requested_delay_sec": float(delay_sec),
         }
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         out_path = system_inbox_dir / "system_{}_say.json".format(stamp)
@@ -130,7 +160,31 @@ def schedule_robot_say_via_py2(text, delay_sec=5.0):
         try:
             tmp_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
             os.replace(str(tmp_path), str(out_path))
+            _append_master_robot_event({
+                "event": "system_say_enqueued",
+                "session_dir": str(session_dir),
+                "path": str(out_path),
+                "source": payload["source"],
+                "delay_sec": float(delay_sec),
+                "text": text,
+            })
+            _append_voice_session_event(session_dir, "master_server_events.jsonl", {
+                "event": "system_say_enqueued",
+                "path": str(out_path),
+                "source": payload["source"],
+                "delay_sec": float(delay_sec),
+                "text": text,
+            })
         except Exception as exc:
+            _append_master_robot_event({
+                "event": "system_say_enqueue_failed",
+                "reason": "exception",
+                "error": str(exc),
+                "session_dir": str(session_dir),
+                "source": payload["source"],
+                "delay_sec": float(delay_sec),
+                "text": text,
+            })
             print("WARN: Failed to enqueue delayed robot speech: {}".format(exc))
 
     timer = threading.Timer(delay_sec, _task)
@@ -139,8 +193,41 @@ def schedule_robot_say_via_py2(text, delay_sec=5.0):
     return timer
 
 
+def _append_master_robot_event(payload):
+    try:
+        ALTRUISM_DATA_DIR.mkdir(parents=True, exist_ok=True)
+        event = dict(payload or {})
+        event.setdefault("ts", datetime.now().isoformat(timespec="milliseconds"))
+        path = ALTRUISM_DATA_DIR / "master_server_robot_events.jsonl"
+        with path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(event, ensure_ascii=False, sort_keys=True) + "\n")
+    except Exception as exc:
+        print("WARN: Failed writing master robot event: {}".format(exc))
+
+
+def _append_voice_session_event(session_dir, filename, payload):
+    try:
+        event = dict(payload or {})
+        event.setdefault("ts", datetime.now().isoformat(timespec="milliseconds"))
+        path = Path(session_dir) / filename
+        with path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(event, ensure_ascii=False, sort_keys=True) + "\n")
+    except Exception as exc:
+        print("WARN: Failed writing voice session event {}: {}".format(filename, exc))
+
+
 def robot_commands_enabled():
     return not TEST_BYPASS_ROBOT_COMMANDS
+
+
+def should_bypass_pre_conversation():
+    return bool(EMERGENCY_BYPASS_PRE_CONVERSATION)
+
+
+def get_initial_stage_url():
+    if should_bypass_pre_conversation():
+        return "/stage/robot"
+    return "/stage/captcha_pre"
 
 
 def get_latest_voice_chat_session_dir():
@@ -162,6 +249,48 @@ def get_latest_voice_chat_session_dir():
     if not session_dirs:
         return None
     return max(session_dirs, key=lambda p: p.stat().st_mtime)
+
+
+def get_robot_battery_status(max_age_sec=30.0):
+    status = {
+        "ok": True,
+        "logged_in": False,
+        "battery_charge": None,
+        "updated_at": None,
+        "age_sec": None,
+        "robot_name": None,
+        "robot_ip": None,
+        "error": None,
+    }
+    if not VOICE_CHAT_ROBOT_STATUS_PATH.is_file():
+        status["error"] = "No robot status has been reported yet."
+        return status
+
+    try:
+        payload = json.loads(VOICE_CHAT_ROBOT_STATUS_PATH.read_text(encoding="utf-8"))
+    except Exception as exc:
+        status["error"] = "Could not read robot status: {}".format(exc)
+        return status
+
+    updated_at = payload.get("updated_at")
+    status["updated_at"] = updated_at
+    try:
+        updated_dt = datetime.fromisoformat(str(updated_at))
+        status["age_sec"] = max(0.0, (datetime.now() - updated_dt).total_seconds())
+    except Exception:
+        status["age_sec"] = None
+
+    health = payload.get("robot_health") or {}
+    if status["age_sec"] is not None and status["age_sec"] > float(max_age_sec):
+        status["error"] = "Robot status is stale."
+        return status
+
+    status["logged_in"] = bool(health.get("connected"))
+    status["battery_charge"] = health.get("battery_charge")
+    status["robot_name"] = payload.get("robot_name")
+    status["robot_ip"] = health.get("ip_used") or health.get("ip")
+    status["error"] = health.get("battery_charge_error")
+    return status
 
 
 def copy_robot_session_artifacts(exp_sid, exp):
@@ -820,6 +949,7 @@ def create_new_experiment_session(participant_number, age, gender, results_dir):
         "csv_path": str(csv_path),
         "jsonl_path": str(jsonl_path),
         "watchdog_total": 0,
+        "emergency_bypass_pre_conversation": should_bypass_pre_conversation(),
         "startup_warning": get_startup_config_warning(),
         "startup_warning_shown": False,
     }
@@ -873,6 +1003,7 @@ def get_or_create_experiment_session(participant_number, age, gender, results_di
         "csv_path": str(csv_path),
         "jsonl_path": str(jsonl_path),
         "watchdog_total": 0,
+        "emergency_bypass_pre_conversation": should_bypass_pre_conversation(),
         "startup_warning": get_startup_config_warning(),
         "startup_warning_shown": False,
     }
@@ -912,18 +1043,30 @@ register_captcha_routes(
 @app.route("/", methods=["GET", "POST"])
 def experimenter_start():
     if request.method == "GET":
-        return render_template("experimenter_start.html", error=None)
+        return render_template(
+            "experimenter_start.html",
+            error=None,
+            startup_warning=get_startup_config_warning(),
+        )
 
     raw = (request.form.get("participant_number") or "").strip()
     if raw == "":
-        return render_template("experimenter_start.html", error="Please enter a participant number.")
+        return render_template(
+            "experimenter_start.html",
+            error="Please enter a participant number.",
+            startup_warning=get_startup_config_warning(),
+        )
 
     try:
         participant_number = int(raw)
         if participant_number <= 0:
             raise ValueError()
     except ValueError:
-        return render_template("experimenter_start.html", error="Participant number must be a positive whole number.")
+        return render_template(
+            "experimenter_start.html",
+            error="Participant number must be a positive whole number.",
+            startup_warning=get_startup_config_warning(),
+        )
 
     pending_sid = uuid.uuid4().hex
     PENDING_STARTS[pending_sid] = participant_number
@@ -964,7 +1107,7 @@ def participant_start():
 
     PENDING_STARTS.pop(pending_sid, None)
 
-    resp = make_response(redirect("/stage/captcha_pre"))
+    resp = make_response(redirect(get_initial_stage_url()))
     resp.set_cookie("exp_session", exp_sid, samesite="Lax")
     resp.delete_cookie("pending_exp_start")
     return resp
@@ -974,6 +1117,8 @@ def q_pre_captcha_page():
     exp_sid, exp = require_exp_session()
     if not exp_sid:
         return redirect("/")
+    if should_bypass_pre_conversation():
+        return redirect("/stage/robot")
 
     # record display time ONCE
     if "q_pre_captcha_display_ts" not in exp:
@@ -991,6 +1136,10 @@ def q_pre_captcha_page():
 @app.route("/api/q_pre_captcha/submit", methods=["POST"])
 def q_pre_captcha_submit():
     exp_sid, exp = require_exp_session()
+    if not exp_sid:
+        return redirect("/")
+    if should_bypass_pre_conversation():
+        return jsonify({"ok": True, "next_url": "/stage/robot"})
 
     payload = request.get_json(force=True) or {}
     responses = payload.get("responses")
@@ -1033,6 +1182,8 @@ def q_pre_idaq_page():
     exp_sid, exp = require_exp_session()
     if not exp_sid:
         return redirect("/")
+    if should_bypass_pre_conversation():
+        return redirect("/stage/robot")
 
     # record display time ONCE
     if "q_pre_idaq_display_ts" not in exp:
@@ -1049,6 +1200,10 @@ def q_pre_idaq_page():
 @app.route("/api/q_pre_idaq/submit", methods=["POST"])
 def q_pre_idaq_submit():
     exp_sid, exp = require_exp_session()
+    if not exp_sid:
+        return redirect("/")
+    if should_bypass_pre_conversation():
+        return jsonify({"ok": True, "next_url": "/stage/robot"})
 
     payload = request.get_json(force=True) or {}
     responses = payload.get("responses")
@@ -1091,6 +1246,8 @@ def q_pre_2050_page():
     exp_sid, exp = require_exp_session()
     if not exp_sid:
         return redirect("/")
+    if should_bypass_pre_conversation():
+        return redirect("/stage/robot")
 
     # record display time ONCE
     if "q_pre_2050_display_ts" not in exp:
@@ -1099,6 +1256,13 @@ def q_pre_2050_page():
     if "q_pre_captcha_robot_test" not in exp:
         exp["q_pre_captcha_robot_test"] = True
         if robot_commands_enabled():
+            _append_master_robot_event({
+                "event": "q_pre_2050_spontaneous_say_requested",
+                "exp_sid": exp_sid,
+                "participant_number": exp.get("participant_number"),
+                "delay_sec": 22.0,
+                "latest_voice_session_dir": str(get_latest_voice_chat_session_dir() or ""),
+            })
             schedule_robot_say_via_py2("Oh, hey, I was just dreaming for a moment. Did the experiment start already?", delay_sec=22)
 
     return render_template(
@@ -1113,6 +1277,10 @@ def q_pre_2050_page():
 @app.route("/api/q_pre_2050/submit", methods=["POST"])
 def q_pre_2050_submit():
     exp_sid, exp = require_exp_session()
+    if not exp_sid:
+        return redirect("/")
+    if should_bypass_pre_conversation():
+        return jsonify({"ok": True, "next_url": "/stage/robot"})
 
     payload = request.get_json(force=True) or {}
     responses = payload.get("responses")
@@ -1156,6 +1324,13 @@ def q_pre_2050_submit():
 def robot_stage():
     if TEST_BYPASS_ROBOT_COMMANDS:
         return redirect("/stage/q_post_gators")
+    exp_sid, exp = require_exp_session()
+    _append_master_robot_event({
+        "event": "robot_stage_loaded",
+        "exp_sid": exp_sid,
+        "participant_number": exp.get("participant_number") if exp else None,
+        "latest_voice_session_dir": str(get_latest_voice_chat_session_dir() or ""),
+    })
     notification_path = BASE / "audio" / "notification.mp3"
     notification_url = None
     if notification_path.exists():
@@ -1167,6 +1342,12 @@ def robot_stage():
 @app.route("/audio/<path:filename>")
 def serve_audio(filename):
     return send_from_directory(BASE / "audio", filename)
+
+
+@app.route("/api/robot/battery", methods=["GET"])
+def robot_battery():
+    return jsonify(get_robot_battery_status())
+
 
 @app.route("/api/robot/finish", methods=["POST"])
 def robot_finish():

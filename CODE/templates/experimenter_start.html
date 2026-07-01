@@ -61,11 +61,34 @@
       color:#aaa;
       font-size:13px;
     }
+
+    .robot-status {
+      margin: 12px 0 18px;
+      padding: 10px 12px;
+      border: 1px solid #333;
+      border-radius: 8px;
+      background: #121212;
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    .robot-status[data-state="ok"] {
+      color: #9be28f;
+      border-color: #2d5a2a;
+    }
+
+    .robot-status[data-state="warn"] {
+      color: #ffd27a;
+      border-color: #685020;
+    }
   </style>
 </head>
 <body>
   <div class="card">
     <h2>Experimenter setup</h2>
+    <div id="robot-battery-status" class="robot-status" data-state="warn">
+      Robot battery: checking...
+    </div>
 
     <form method="POST" action="/">
       <label for="participant_number">Participant number</label>
@@ -87,5 +110,41 @@
       <div class="hint">Enter this before handing the screen to the participant.</div>
     </form>
   </div>
+  {% if startup_warning %}
+    <script>
+      window.addEventListener("load", function () {
+        alert({{ startup_warning | tojson }});
+      });
+    </script>
+  {% endif %}
+  <script>
+    (function () {
+      const statusEl = document.getElementById("robot-battery-status");
+      if (!statusEl) return;
+
+      function setStatus(text, state) {
+        statusEl.textContent = text;
+        statusEl.dataset.state = state || "warn";
+      }
+
+      async function refreshBattery() {
+        try {
+          const response = await fetch("/api/robot/battery", { cache: "no-store" });
+          const data = await response.json();
+          if (data.logged_in && data.battery_charge !== null && data.battery_charge !== undefined) {
+            const robot = data.robot_name ? ` (${data.robot_name})` : "";
+            setStatus(`Robot battery${robot}: ${data.battery_charge}%`, "ok");
+            return;
+          }
+          setStatus("Robot battery: unavailable", "warn");
+        } catch (err) {
+          setStatus("Robot battery: unavailable", "warn");
+        }
+      }
+
+      refreshBattery();
+      window.setInterval(refreshBattery, 5000);
+    })();
+  </script>
 </body>
 </html>

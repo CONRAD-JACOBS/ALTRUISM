@@ -1,0 +1,19 @@
+{
+  "session_end_announced": false, 
+  "session_elapsed_sec": 0.0047609806060791016, 
+  "session_end_armed_at": null, 
+  "session_end_armed_turn_id": null, 
+  "stop_worker": true, 
+  "final_line": "We have now reached the end of this session. Please let the experimenter know that this chat is complete.", 
+  "after_sec": 600.0, 
+  "session_end_armed": false, 
+  "enabled": false, 
+  "updated_at": "2026-04-21T09:52:07", 
+  "model_closing_instruction": "", 
+  "session_end_turn_id": null, 
+  "append_final_line": true, 
+  "action": "repose", 
+  "session_should_stop_worker": false, 
+  "session_started_at": "2026-04-21T09:52:07", 
+  "use_model_closing_instruction": false
+}
