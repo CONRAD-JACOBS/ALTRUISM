@@ -7,12 +7,50 @@ import statistics as stats
 ROOT = Path(__file__).resolve().parents[1]
 INFILE = ROOT / "ANALYSIS" / "1_assembled.csv"
 OUTFILE = ROOT / "ANALYSIS" / "2_simplified.csv"
+AUDITFILE = ROOT / "ANALYSIS" / "2_simplified_session_audit.csv"
 DATA_DIR = ROOT / "DATA"
 
 CAPTCHA_STAGES = ["captcha_pre", "captcha_post"]
 QUESTIONNAIRE_STAGES = ["q_pre_captcha", "q_pre_idaq", "q_pre_2050", "q_post_gators", "q_post_specific"]
 
 RESPONSES_COL = "questionnaire_json"   # <-- adjust if needed
+
+# Session-level corrections are keyed by exp_sid, which is the stable identity
+# across CSV rows and copied voice-session files. Raw files are left untouched.
+SESSION_CORRECTIONS = {
+    "846efc72e21e4402b3c5638b28a00e7c": {
+        "exclude": True,
+        "analysis_note": "Canceled robot-failure session; incomplete at q_pre_2050 and duplicated P101.",
+    },
+    "3e0a216249f6428a879be37b1eb5f75f": {
+        "participant_number": 96,
+        "analysis_note": "CSV contains stale participant_number 95 on post rows/voice metadata; source file and pre rows are P096.",
+    },
+    "b09679120fe74756b97eb9314a75dec4": {
+        "voice_metrics_valid": False,
+        "analysis_note": "Copied dialogue is only a pre-session interruption, so conversation metrics are treated as missing.",
+    },
+    "a0f2fb5dabb146c2830289f564f52723": {
+        "voice_exp_sid": "b136c7590f164eb38f2cda10df8f9e63",
+        "analysis_note": "Duplicate P093 CSV copies exist and voice metadata has stale exp_sid b136c759; exact duplicate raw rows are collapsed and voice metrics are matched by explicit alias.",
+    },
+}
+
+VOICE_EXP_SID_ALIASES = {
+    correction["voice_exp_sid"]: exp_sid
+    for exp_sid, correction in SESSION_CORRECTIONS.items()
+    if "voice_exp_sid" in correction
+}
+
+VOICE_METRIC_COLS = [
+    "total_words",
+    "mean_words_per_turn",
+    "word_rate_wps",
+    "robot_total_words",
+    "robot_mean_words_per_turn",
+    "robot_word_rate_wps",
+    "mean_latency_sec",
+]
 
 def to_dt(s):
     return pd.to_datetime(s, errors="coerce")
@@ -289,6 +327,7 @@ def load_watchdog_totals(data_dir):
         exp_sid = str(payload.get("exp_sid") or "").strip()
         if not exp_sid:
             continue
+        exp_sid = VOICE_EXP_SID_ALIASES.get(exp_sid, exp_sid)
 
         try:
             watchdog_total = int(payload.get("watchdog_total", 0) or 0)
@@ -319,6 +358,7 @@ def load_session_language_metrics(data_dir):
         exp_sid = str(payload.get("exp_sid") or "").strip()
         if not exp_sid:
             continue
+        exp_sid = VOICE_EXP_SID_ALIASES.get(exp_sid, exp_sid)
 
         rows.append({
             "exp_sid": exp_sid,
@@ -349,6 +389,143 @@ def load_session_language_metrics(data_dir):
     metrics_df = metrics_df.drop_duplicates(subset=["exp_sid"], keep="last")
     return metrics_df
 
+def _first_existing(paths):
+    for path in paths:
+        if path.exists():
+            return path
+    return None
+
+def _line_count(path):
+    if path is None or not path.exists():
+        return None
+    try:
+        with open(path, encoding="utf-8", errors="ignore") as f:
+            return sum(1 for _ in f)
+    except Exception:
+        return None
+
+def _voice_artifact_info(exp_sid, participant_number):
+    if participant_number is None or pd.isna(participant_number):
+        return {}
+
+    pnum = int(participant_number)
+    exp_short = str(exp_sid)[:8]
+    correction = SESSION_CORRECTIONS.get(exp_sid, {})
+    alias_short = str(correction.get("voice_exp_sid", ""))[:8]
+    candidate_shorts = [exp_short]
+    if alias_short and alias_short not in candidate_shorts:
+        candidate_shorts.append(alias_short)
+
+    meta_path = _first_existing([
+        DATA_DIR / f"P{pnum:03d}_{short}_voice_session_metadata.json"
+        for short in candidate_shorts
+    ])
+    dialogue_path = _first_existing([
+        DATA_DIR / f"P{pnum:03d}_{short}_session_dialogue.txt"
+        for short in candidate_shorts
+    ])
+
+    info = {
+        "voice_metadata_file": meta_path.name if meta_path else "",
+        "dialogue_file": dialogue_path.name if dialogue_path else "",
+        "dialogue_line_count": _line_count(dialogue_path),
+        "voice_metadata_exp_sid": "",
+        "voice_metadata_participant_number": "",
+        "voice_copied_at": "",
+        "voice_source_session_dir": "",
+    }
+
+    if meta_path is not None:
+        try:
+            payload = json.loads(meta_path.read_text(encoding="utf-8"))
+            info.update({
+                "voice_metadata_exp_sid": payload.get("exp_sid", ""),
+                "voice_metadata_participant_number": payload.get("participant_number", ""),
+                "voice_copied_at": payload.get("copied_at", ""),
+                "voice_source_session_dir": Path(str(payload.get("source_session_dir", ""))).name,
+            })
+        except Exception:
+            pass
+
+    return info
+
+def _stage_timestamp_gap(g, before_stage, before_col, after_stage, after_col):
+    before = g.loc[g["stage_id"] == before_stage, before_col]
+    after = g.loc[g["stage_id"] == after_stage, after_col]
+    if before.empty or after.empty:
+        return None
+
+    before_ts = pd.to_datetime(before, errors="coerce").max()
+    after_ts = pd.to_datetime(after, errors="coerce").min()
+    if pd.isna(before_ts) or pd.isna(after_ts):
+        return None
+    return (after_ts - before_ts).total_seconds()
+
+def write_session_audit(df, merged):
+    rows = []
+    merged_sids = set(merged["exp_sid"])
+    for exp_sid, g in df.groupby("exp_sid", sort=False):
+        correction = SESSION_CORRECTIONS.get(exp_sid, {})
+        participant_number = (
+            int(merged.loc[merged["exp_sid"] == exp_sid, "participant_number"].iloc[0])
+            if exp_sid in merged_sids
+            else (
+                int(g["participant_number"].dropna().mode().iloc[0])
+                if g["participant_number"].notna().any()
+                else None
+            )
+        )
+        voice_info = _voice_artifact_info(exp_sid, participant_number)
+        conversation_gap_sec = _stage_timestamp_gap(
+            g, "q_pre_2050", "timestamp_submit", "q_post_gators", "timestamp_display"
+        )
+        copied_at = pd.to_datetime(voice_info.get("voice_copied_at", ""), errors="coerce")
+        q_post_display = pd.to_datetime(
+            g.loc[g["stage_id"] == "q_post_gators", "timestamp_display"], errors="coerce"
+        ).min()
+        voice_to_post_gap_sec = (
+            (q_post_display - copied_at).total_seconds()
+            if pd.notna(copied_at) and pd.notna(q_post_display)
+            else None
+        )
+
+        warnings = []
+        if conversation_gap_sec is not None and conversation_gap_sec < 120:
+            warnings.append("short_pre_to_post_gap")
+        if voice_info.get("voice_metadata_exp_sid") and voice_info["voice_metadata_exp_sid"] != exp_sid:
+            alias = VOICE_EXP_SID_ALIASES.get(voice_info["voice_metadata_exp_sid"])
+            if alias == exp_sid:
+                warnings.append("voice_exp_sid_alias_used")
+            else:
+                warnings.append("voice_exp_sid_mismatch")
+        if voice_info.get("voice_metadata_participant_number") not in ("", participant_number):
+            warnings.append("voice_participant_number_mismatch")
+        if not voice_info.get("dialogue_file"):
+            warnings.append("missing_dialogue_file")
+        elif voice_info.get("dialogue_line_count") is not None and voice_info["dialogue_line_count"] < 5:
+            warnings.append("very_short_dialogue")
+
+        rows.append({
+            "exp_sid": exp_sid,
+            "participant_numbers_in_rows": "|".join(
+                sorted(str(int(x)) for x in g["participant_number"].dropna().unique())
+            ),
+            "analysis_participant_number": participant_number,
+            "n_rows": len(g),
+            "stage_ids": "|".join(sorted(g["stage_id"].dropna().astype(str).unique())),
+            "conversation_gap_sec": conversation_gap_sec,
+            "voice_to_post_gap_sec": voice_to_post_gap_sec,
+            **voice_info,
+            "excluded_from_simplified": bool(correction.get("exclude", False)),
+            "voice_metrics_valid": bool(correction.get("voice_metrics_valid", True)),
+            "audit_warnings": "|".join(warnings),
+            "analysis_note": correction.get("analysis_note", ""),
+        })
+
+    audit = pd.DataFrame(rows)
+    audit.to_csv(AUDITFILE, index=False)
+    print(f"Wrote session audit -> {AUDITFILE}")
+
 def main():
     df = pd.read_csv(INFILE, dtype=str)
 
@@ -368,26 +545,52 @@ def main():
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
+    excluded_sids = {
+        exp_sid for exp_sid, correction in SESSION_CORRECTIONS.items()
+        if correction.get("exclude", False)
+    }
+    if excluded_sids:
+        before = len(df)
+        df_model = df[~df["exp_sid"].isin(excluded_sids)].copy()
+        print(f"Excluded {before - len(df_model)} raw rows from known canceled sessions.")
+    else:
+        df_model = df.copy()
+
+    before_dedup = len(df_model)
+    df_model = df_model.drop_duplicates().copy()
+    if len(df_model) != before_dedup:
+        print(f"Collapsed {before_dedup - len(df_model)} exact duplicate raw rows.")
+
     # --- timestamps ---
-    df["timestamp_display_dt"] = to_dt(df.get("timestamp_display"))
-    df["timestamp_submit_dt"] = to_dt(df.get("timestamp_submit"))
+    df_model["timestamp_display_dt"] = to_dt(df_model.get("timestamp_display"))
+    df_model["timestamp_submit_dt"] = to_dt(df_model.get("timestamp_submit"))
 
     # --- demographics ---
     def demo_one(g):
+        exp_sid = g["exp_sid"].iloc[0]
+        correction = SESSION_CORRECTIONS.get(exp_sid, {})
+        if "participant_number" in correction:
+            participant_number = int(correction["participant_number"])
+        elif g["participant_number"].notna().any():
+            participant_number = int(g["participant_number"].dropna().mode().iloc[0])
+        else:
+            participant_number = None
+
         return pd.Series({
-            "exp_sid": g["exp_sid"].iloc[0],
-            "participant_number": int(g["participant_number"].dropna().iloc[0]) if g["participant_number"].notna().any() else None,
+            "exp_sid": exp_sid,
+            "participant_number": participant_number,
             "age": int(g["age"].dropna().iloc[0]) if g["age"].notna().any() else None,
             "gender": g["gender"].dropna().iloc[0] if g["gender"].notna().any() else None,
+            "analysis_note": correction.get("analysis_note", ""),
              })
 
-    demo_rows = [demo_one(g) for _, g in df.groupby("exp_sid", sort=False)]
+    demo_rows = [demo_one(g) for _, g in df_model.groupby("exp_sid", sort=False)]
     merged = pd.DataFrame(demo_rows).reset_index(drop=True)
 
     # --- captcha stages ---
     for stage in CAPTCHA_STAGES:
         merged = merged.merge(
-            summarize_captcha_stage(df, stage),
+            summarize_captcha_stage(df_model, stage),
             on="exp_sid",
             how="left"
         )
@@ -395,7 +598,7 @@ def main():
     # --- questionnaire stages ---
     for stage in QUESTIONNAIRE_STAGES:
         merged = merged.merge(
-            summarize_questionnaire_stage(df, stage),
+            summarize_questionnaire_stage(df_model, stage),
             on="exp_sid",
             how="left"
         )
@@ -406,9 +609,14 @@ def main():
 
     language_df = load_session_language_metrics(DATA_DIR)
     merged = merged.merge(language_df, on="exp_sid", how="left")
+    merged["voice_metrics_valid"] = merged["exp_sid"].map(
+        lambda exp_sid: SESSION_CORRECTIONS.get(exp_sid, {}).get("voice_metrics_valid", True)
+    )
+    merged.loc[~merged["voice_metrics_valid"], VOICE_METRIC_COLS] = pd.NA
 
     OUTFILE.parent.mkdir(parents=True, exist_ok=True)
     merged.to_csv(OUTFILE, index=False)
+    write_session_audit(df, merged)
     print(f"Wrote {len(merged)} rows -> {OUTFILE}")
 
 if __name__ == "__main__":

@@ -3,6 +3,11 @@ import time
 import warnings
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+MPL_DIR = ROOT / "ANALYSIS" / ".mplconfig"
+MPL_DIR.mkdir(parents=True, exist_ok=True)
+os.environ.setdefault("MPLCONFIGDIR", str(MPL_DIR))
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -34,6 +39,10 @@ TRIVIAL = [
 
 def _timestamp():
     return time.strftime("%Y%m%d_%H%M%S")
+
+
+def _safe_label(label):
+    return "".join(ch if ch.isalnum() or ch in ("_", "-") else "_" for ch in str(label)).strip("_")
 
 
 def _irr_table(result):
@@ -133,10 +142,217 @@ def _plot_primary_irr(fit, out_path):
     plt.close()
 
 
-def run_nb_model_suite(csv_path, out_dir=None):
+def _primary_prediction_grid(dat, fit, focal, moderator, moderator_values):
+    focal_values = np.linspace(dat[focal].min(), dat[focal].max(), 80)
+    rows = []
+    like_mean = dat["q_post_specific_likeability"].mean()
+    ment_mean = dat["q_post_specific_mentacy_belief_scale"].mean()
+
+    for label, moderator_value in moderator_values:
+        for focal_value in focal_values:
+            like = focal_value if focal == "q_post_specific_likeability" else moderator_value
+            ment = focal_value if focal == "q_post_specific_mentacy_belief_scale" else moderator_value
+            like_c = like - like_mean
+            ment_c = ment - ment_mean
+            rows.append({
+                "focal": focal,
+                "moderator": moderator,
+                "moderator_level": label,
+                "moderator_value": moderator_value,
+                "q_post_specific_likeability": like,
+                "q_post_specific_mentacy_belief_scale": ment,
+                "like_c": like_c,
+                "ment_c": ment_c,
+                "like_x_ment": like_c * ment_c,
+            })
+
+    grid = pd.DataFrame(rows)
+    grid["predicted_completions"] = fit.predict(grid)
+    return grid
+
+
+def _plot_prediction_lines(grid, x_col, x_label, title, out_path):
+    plt.figure(figsize=(7.2, 4.8))
+    colors = {
+        "low": "#2f5d8a",
+        "medium": "#555555",
+        "high": "#b24a2a",
+    }
+    for level, d in grid.groupby("moderator_level", sort=False):
+        plt.plot(
+            d[x_col],
+            d["predicted_completions"],
+            label="{} {}".format(level.title(), grid["moderator"].iloc[0].replace("q_post_specific_", "").replace("_belief_scale", "")),
+            linewidth=2,
+            color=colors.get(level, None),
+        )
+    plt.xlabel(x_label)
+    plt.ylabel("Predicted post-task completions")
+    plt.title(title)
+    plt.legend(frameon=False)
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=180)
+    plt.close()
+
+
+def _plot_raw_interaction_scatter(dat, out_path):
+    rng = np.random.default_rng(20260708)
+    x = dat["q_post_specific_likeability"].to_numpy(dtype=float)
+    y = dat["q_post_specific_mentacy_belief_scale"].to_numpy(dtype=float)
+    z = dat[OUTCOME].to_numpy(dtype=float)
+    x_jitter = x + rng.normal(0, 0.045, size=len(dat))
+    y_jitter = y + rng.normal(0, 0.10, size=len(dat))
+
+    like_q75 = dat["q_post_specific_likeability"].quantile(0.75)
+    ment_q25 = dat["q_post_specific_mentacy_belief_scale"].quantile(0.25)
+
+    plt.figure(figsize=(7.2, 5.2))
+    sc = plt.scatter(
+        x_jitter,
+        y_jitter,
+        c=z,
+        s=38 + np.sqrt(np.maximum(z, 0)) * 8,
+        cmap="viridis",
+        alpha=0.78,
+        edgecolors="white",
+        linewidths=0.5,
+    )
+    plt.axvline(like_q75, color="#b24a2a", linestyle="--", linewidth=1)
+    plt.axhline(ment_q25, color="#b24a2a", linestyle="--", linewidth=1)
+    plt.fill_between(
+        [like_q75, dat["q_post_specific_likeability"].max() + 0.25],
+        dat["q_post_specific_mentacy_belief_scale"].min() - 0.5,
+        ment_q25,
+        color="#b24a2a",
+        alpha=0.08,
+    )
+    plt.colorbar(sc, label="Post-task completions")
+    plt.xlabel("Liking")
+    plt.ylabel("Mentacy belief")
+    plt.title("Raw interaction scatter: completions across liking x mentacy")
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=180)
+    plt.close()
+
+
+def _binned_interaction_summary(dat):
+    like_q75 = dat["q_post_specific_likeability"].quantile(0.75)
+    ment_q25 = dat["q_post_specific_mentacy_belief_scale"].quantile(0.25)
+    out = dat.copy()
+    out["liking_zone"] = np.where(
+        out["q_post_specific_likeability"] >= like_q75,
+        "high_liking",
+        "lower_liking",
+    )
+    out["mentacy_zone"] = np.where(
+        out["q_post_specific_mentacy_belief_scale"] <= ment_q25,
+        "low_mentacy",
+        "higher_mentacy",
+    )
+    out["quadrant"] = out["liking_zone"] + "__" + out["mentacy_zone"]
+    summary = (
+        out.groupby("quadrant", observed=False)[OUTCOME]
+        .agg(n="size", mean_completions="mean", median_completions="median", sd_completions="std", max_completions="max")
+        .reset_index()
+        .sort_values("mean_completions", ascending=False)
+    )
+    return out, summary
+
+
+def _plot_quadrant_means(summary, out_path):
+    d = summary.sort_values("mean_completions", ascending=True)
+    colors = np.where(d["quadrant"].eq("high_liking__low_mentacy"), "#b24a2a", "#2f5d8a")
+    labels = [q.replace("__", "\n").replace("_", " ") for q in d["quadrant"]]
+
+    plt.figure(figsize=(7.4, 4.8))
+    plt.barh(labels, d["mean_completions"], color=colors)
+    for i, (_, row) in enumerate(d.iterrows()):
+        plt.text(row["mean_completions"], i, "  n={}".format(int(row["n"])), va="center", fontsize=9)
+    plt.xlabel("Mean post-task completions")
+    plt.title("Binned means by liking/mentacy quadrant")
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=180)
+    plt.close()
+
+
+def _write_interaction_plots(dat, fit, out_dir, dataset_label, stamp):
+    plot_paths = []
+    csv_paths = []
+
+    ment_levels = [
+        ("low", dat["q_post_specific_mentacy_belief_scale"].quantile(0.25)),
+        ("medium", dat["q_post_specific_mentacy_belief_scale"].quantile(0.50)),
+        ("high", dat["q_post_specific_mentacy_belief_scale"].quantile(0.75)),
+    ]
+    like_levels = [
+        ("low", dat["q_post_specific_likeability"].quantile(0.25)),
+        ("medium", dat["q_post_specific_likeability"].quantile(0.50)),
+        ("high", dat["q_post_specific_likeability"].quantile(0.75)),
+    ]
+
+    liking_grid = _primary_prediction_grid(
+        dat,
+        fit,
+        "q_post_specific_likeability",
+        "q_post_specific_mentacy_belief_scale",
+        ment_levels,
+    )
+    liking_grid_path = os.path.join(out_dir, "5_nb_model_{}_predicted_liking_by_mentacy_{}.csv".format(dataset_label, stamp))
+    liking_grid.to_csv(liking_grid_path, index=False)
+    csv_paths.append(liking_grid_path)
+    liking_plot = os.path.join(out_dir, "5_nb_model_{}_predicted_liking_by_mentacy_{}.png".format(dataset_label, stamp))
+    _plot_prediction_lines(
+        liking_grid,
+        "q_post_specific_likeability",
+        "Liking",
+        "Predicted completions by liking at low / medium / high mentacy",
+        liking_plot,
+    )
+    plot_paths.append(liking_plot)
+
+    mentacy_grid = _primary_prediction_grid(
+        dat,
+        fit,
+        "q_post_specific_mentacy_belief_scale",
+        "q_post_specific_likeability",
+        like_levels,
+    )
+    mentacy_grid_path = os.path.join(out_dir, "5_nb_model_{}_predicted_mentacy_by_liking_{}.csv".format(dataset_label, stamp))
+    mentacy_grid.to_csv(mentacy_grid_path, index=False)
+    csv_paths.append(mentacy_grid_path)
+    mentacy_plot = os.path.join(out_dir, "5_nb_model_{}_predicted_mentacy_by_liking_{}.png".format(dataset_label, stamp))
+    _plot_prediction_lines(
+        mentacy_grid,
+        "q_post_specific_mentacy_belief_scale",
+        "Mentacy belief",
+        "Predicted completions by mentacy at low / medium / high liking",
+        mentacy_plot,
+    )
+    plot_paths.append(mentacy_plot)
+
+    scatter_plot = os.path.join(out_dir, "5_nb_model_{}_raw_liking_mentacy_scatter_{}.png".format(dataset_label, stamp))
+    _plot_raw_interaction_scatter(dat, scatter_plot)
+    plot_paths.append(scatter_plot)
+
+    quadrant_data, quadrant_summary = _binned_interaction_summary(dat)
+    quadrant_data_path = os.path.join(out_dir, "5_nb_model_{}_quadrant_assignments_{}.csv".format(dataset_label, stamp))
+    quadrant_summary_path = os.path.join(out_dir, "5_nb_model_{}_quadrant_summary_{}.csv".format(dataset_label, stamp))
+    quadrant_data.to_csv(quadrant_data_path, index=False)
+    quadrant_summary.to_csv(quadrant_summary_path, index=False)
+    csv_paths.extend([quadrant_data_path, quadrant_summary_path])
+
+    quadrant_plot = os.path.join(out_dir, "5_nb_model_{}_quadrant_means_{}.png".format(dataset_label, stamp))
+    _plot_quadrant_means(quadrant_summary, quadrant_plot)
+    plot_paths.append(quadrant_plot)
+
+    return plot_paths, csv_paths, quadrant_summary
+
+
+def run_nb_model_suite(csv_path, out_dir=None, dataset_label="primary"):
     if out_dir is None:
         out_dir = os.path.dirname(os.path.abspath(csv_path))
     os.makedirs(out_dir, exist_ok=True)
+    dataset_label = _safe_label(dataset_label) or "primary"
 
     need = [OUTCOME] + PRIMARY + EXPLORATORY + TRIVIAL
     df = pd.read_csv(csv_path)
@@ -185,6 +401,7 @@ def run_nb_model_suite(csv_path, out_dir=None):
             model_rows.append(
                 {
                     "model": name,
+                    "dataset": dataset_label,
                     "n_obs": int(r.nobs),
                     "df_model": float(r.df_model),
                     "logLik": float(r.llf),
@@ -197,6 +414,7 @@ def run_nb_model_suite(csv_path, out_dir=None):
             model_rows.append(
                 {
                     "model": name,
+                    "dataset": dataset_label,
                     "n_obs": np.nan,
                     "df_model": np.nan,
                     "logLik": np.nan,
@@ -210,42 +428,58 @@ def run_nb_model_suite(csv_path, out_dir=None):
     lr_rows = []
     if "theory_primary_only" in fits and "theory_plus_exploratory" in fits:
         d = _lr_compare(fits["theory_primary_only"], fits["theory_plus_exploratory"])
+        d["dataset"] = dataset_label
         d["comparison"] = "theory_primary_only -> theory_plus_exploratory"
         lr_rows.append(d)
     if "theory_plus_exploratory" in fits and "theory_plus_exploratory_plus_trivial" in fits:
         d = _lr_compare(fits["theory_plus_exploratory"], fits["theory_plus_exploratory_plus_trivial"])
+        d["dataset"] = dataset_label
         d["comparison"] = "theory_plus_exploratory -> theory_plus_exploratory_plus_trivial"
         lr_rows.append(d)
     lr_df = pd.DataFrame(lr_rows)
 
     stamp = _timestamp()
-    cmp_csv = os.path.join(out_dir, "5_nb_model_comparison_{}.csv".format(stamp))
+    cmp_csv = os.path.join(out_dir, "5_nb_model_{}_comparison_{}.csv".format(dataset_label, stamp))
     model_cmp.to_csv(cmp_csv, index=False)
 
     irr_paths = []
     for name, r in fits.items():
         t = _irr_table(r)
-        p = os.path.join(out_dir, "5_nb_model_irr_{}_{}.csv".format(name, stamp))
+        t.insert(0, "dataset", dataset_label)
+        p = os.path.join(out_dir, "5_nb_model_{}_irr_{}_{}.csv".format(dataset_label, name, stamp))
         t.to_csv(p)
         irr_paths.append(p)
 
     plot_paths = []
-    outcome_plot = os.path.join(out_dir, "5_nb_model_outcome_distribution_{}.png".format(stamp))
+    outcome_plot = os.path.join(out_dir, "5_nb_model_{}_outcome_distribution_{}.png".format(dataset_label, stamp))
     _plot_outcome_distribution(dat, outcome_plot)
     plot_paths.append(outcome_plot)
 
-    interaction_plot = os.path.join(out_dir, "5_nb_model_like_x_ment_heatmap_{}.png".format(stamp))
+    interaction_plot = os.path.join(out_dir, "5_nb_model_{}_like_x_ment_heatmap_{}.png".format(dataset_label, stamp))
     _plot_primary_interaction_heatmap(dat, interaction_plot)
     plot_paths.append(interaction_plot)
 
     if "theory_primary_only" in fits:
-        irr_plot = os.path.join(out_dir, "5_nb_model_primary_irr_{}.png".format(stamp))
+        irr_plot = os.path.join(out_dir, "5_nb_model_{}_primary_irr_{}.png".format(dataset_label, stamp))
         _plot_primary_irr(fits["theory_primary_only"], irr_plot)
         plot_paths.append(irr_plot)
+        interaction_plot_paths, interaction_csv_paths, quadrant_summary = _write_interaction_plots(
+            dat,
+            fits["theory_primary_only"],
+            out_dir,
+            dataset_label,
+            stamp,
+        )
+        plot_paths.extend(interaction_plot_paths)
+        extra_csv_paths = interaction_csv_paths
+    else:
+        quadrant_summary = pd.DataFrame()
+        extra_csv_paths = []
 
-    summary_txt = os.path.join(out_dir, "5_nb_model_summary_{}.txt".format(stamp))
+    summary_txt = os.path.join(out_dir, "5_nb_model_{}_summary_{}.txt".format(dataset_label, stamp))
     with open(summary_txt, "w") as f:
         f.write("Negative Binomial Model Suite\n")
+        f.write("dataset: {}\n".format(dataset_label))
         f.write("data: {}\n".format(csv_path))
         f.write("rows_used: {}\n".format(len(dat)))
         f.write("outcome: {}\n\n".format(OUTCOME))
@@ -258,6 +492,10 @@ def run_nb_model_suite(csv_path, out_dir=None):
         if not lr_df.empty:
             f.write("Nested LR comparisons\n")
             f.write(lr_df.to_string(index=False))
+            f.write("\n\n")
+        if not quadrant_summary.empty:
+            f.write("Liking x mentacy quadrant means\n")
+            f.write(quadrant_summary.to_string(index=False))
             f.write("\n\n")
         if errors:
             f.write("Model fit errors\n")
@@ -274,10 +512,12 @@ def run_nb_model_suite(csv_path, out_dir=None):
                 "or overfit with richer models.\n"
             )
 
-    print("\nSaved:")
+    print("\nSaved for dataset '{}':".format(dataset_label))
     print("- {}".format(cmp_csv))
     print("- {}".format(summary_txt))
     for p in irr_paths:
+        print("- {}".format(p))
+    for p in extra_csv_paths:
         print("- {}".format(p))
     for p in plot_paths:
         print("- {}".format(p))
@@ -292,6 +532,7 @@ def run_nb_model_suite(csv_path, out_dir=None):
         print(lr_df.to_string(index=False))
 
     return {
+        "dataset_label": dataset_label,
         "data_used": dat,
         "fits": fits,
         "errors": errors,
@@ -300,6 +541,7 @@ def run_nb_model_suite(csv_path, out_dir=None):
         "comparison_csv": cmp_csv,
         "summary_txt": summary_txt,
         "irr_csvs": irr_paths,
+        "extra_csvs": extra_csv_paths,
         "plots": plot_paths,
     }
 
@@ -307,5 +549,32 @@ def run_nb_model_suite(csv_path, out_dir=None):
 if __name__ == "__main__":
     here = os.path.dirname(os.path.abspath(__file__))
     output = os.path.join(here, "5_nb_models")
-    default_csv = os.environ.get("ANALYSIS_INPUT_CSV", os.path.join(here, "2_simplified.csv"))
-    run_nb_model_suite(default_csv, out_dir=output)
+    default_csv = os.environ.get("ANALYSIS_INPUT_CSV", os.path.join(here, "3_purified.csv"))
+    results = [run_nb_model_suite(default_csv, out_dir=output, dataset_label="primary")]
+
+    sensitivity_csv = os.environ.get(
+        "ANALYSIS_SENSITIVITY_INPUT_CSV",
+        os.path.join(here, "3_dfbetas_sensitivity.csv"),
+    )
+    if os.path.exists(sensitivity_csv):
+        results.append(
+            run_nb_model_suite(
+                sensitivity_csv,
+                out_dir=output,
+                dataset_label="dfbetas_sensitivity",
+            )
+        )
+    else:
+        print("\nNo DFBETAS sensitivity dataset found at: {}".format(sensitivity_csv))
+
+    if len(results) > 1:
+        stamp = _timestamp()
+        combined_cmp = pd.concat(
+            [r["model_comparison"] for r in results],
+            ignore_index=True,
+        )
+        combined_path = os.path.join(output, "5_nb_model_combined_comparison_{}.csv".format(stamp))
+        combined_cmp.to_csv(combined_path, index=False)
+        print("\nCombined model comparison:")
+        print(combined_cmp.to_string(index=False))
+        print("- {}".format(combined_path))

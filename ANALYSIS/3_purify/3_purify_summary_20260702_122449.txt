@@ -1,0 +1,48 @@
+DFBETAS / leave-one-out purification
+input: /Users/neurorobots/Desktop/repos/ALTRUISM/ANALYSIS/2_simplified.csv
+output: /Users/neurorobots/Desktop/repos/ALTRUISM/ANALYSIS/3_purified.csv
+rows_in_input: 99
+rows_used_for_primary_model: 99
+rows_in_purified_output: 95
+formula: captcha_post_completions ~ like_c + ment_c + like_x_ment
+centering_likeability_mean: 5.5353535353535355
+centering_mentacy_mean: -1.6767676767676767
+thresholds: {'LIKING': 0.5, 'MENT': 0.5, 'LIKINGxMENT': 0.5}
+cooks_distance_threshold: 0.04040404040404041
+cooks_distance_terms: Intercept, like_c, ment_c, like_x_ment
+excluded_participant_count: 4
+
+Full model coefficients
+Intercept      2.731361
+like_c         0.238885
+ment_c         0.058054
+like_x_ment   -0.037882
+alpha          0.674828
+
+Excluded participants
+                         exp_sid  participant_number
+d14543fe53d641f3af028e703af3092c                  51
+b09679120fe74756b97eb9314a75dec4                  76
+cc291a6ebaf34cdb8741a0b0fc736589                  78
+51fdf791ec3446e99d9b0ed31790ea8e                  98
+
+Cook's Distance comparison
+Cook's Distance is diagnostic only here; it does not affect 3_purified.csv.
+Cook-targeted participant count: 8
+Cook-targeted participants
+                         exp_sid  participant_number  cooks_distance  max_abs_dfbetas  exclude_flag
+f421afa804904223a83d5009309f4859                   4        0.107494         0.382509         False
+d14543fe53d641f3af028e703af3092c                  51        0.855598         0.936452          True
+5ff4662ff28f41589cdcda6c6aa93568                  53        0.069819         0.330242         False
+f582a4098ccc4e26a3e07ae72b71605f                  56        0.057242         0.314745         False
+b09679120fe74756b97eb9314a75dec4                  76        0.973908         1.373576          True
+cc291a6ebaf34cdb8741a0b0fc736589                  78        1.332435         1.827144          True
+a0f2fb5dabb146c2830289f564f52723                  93        0.087688         0.289784         False
+51fdf791ec3446e99d9b0ed31790ea8e                  98        0.182707         0.722088          True
+
+DFBETAS vs Cook targeting counts
+targeted_by
+both             4
+dfbetas_only     0
+cooks_only       4
+neither         91

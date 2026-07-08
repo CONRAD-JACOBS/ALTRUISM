@@ -19,13 +19,22 @@ import statsmodels.formula.api as smf
 I used a conservative default cutoff of max(0.50, 2/sqrt(n)), which is 0.50 for the current sample. You can adjust it with:
 python3 ALTRUISM/ANALYSIS/3_purify.py --threshold 0.75
 python3 ALTRUISM/ANALYSIS/3_purify.py --threshold-like 0.75 --threshold-ment 0.6 --threshold-interaction 0.8
-Verification run succeeded. With the current data, it excluded participants 51, 76, 78, and 98, leaving 95 rows in 3_purified.csv. The latest summary is [3_purify_summary_20260701_134417.txt (line 1)](/Users/neurorobots/Desktop/repos/ALTRUISM/ANALYSIS/3_purify/3_purify_summary_20260701_134417.txt:1).
+
+By default, DFBETAS is diagnostic only and does not affect 3_purified.csv.
+To make DFBETAS contribute to 3_purified.csv exclusions, set:
+DFBETAS_CONTRIBUTES_TO_EXCLUSIONS = True
+
+Cook's Distance is also reported as a comparison diagnostic only. You can adjust
+its diagnostic cutoff with:
+python3 ALTRUISM/ANALYSIS/3_purify.py --cooks-threshold 0.10
 """
 
 ROOT = Path(__file__).resolve().parents[1]
 HERE = ROOT / "ANALYSIS"
 INFILE = HERE / "2_simplified.csv"
 OUTFILE = HERE / "3_purified.csv"
+SENSITIVITY_OUTFILE = HERE / "3_dfbetas_sensitivity.csv"
+SENSITIVITY_EXCLUDED_OUTFILE = HERE / "3_dfbetas_sensitivity_excluded.csv"
 OUTDIR = HERE / "3_purify"
 
 OUTCOME = "captcha_post_completions"
@@ -37,10 +46,22 @@ PREDICTOR_LABELS = {
     "ment_c": "MENT",
     "like_x_ment": "LIKINGxMENT",
 }
+COOK_TERMS = ["Intercept"] + PREDICTORS
 
 # Conventional DFBETAS screening is often 2 / sqrt(n). That can be too eager
 # for small, noisy psychology samples, so use a more conservative floor.
 DEFAULT_THRESHOLD_FLOOR = 0.50
+
+# Put participant_number values here for custom/manual exclusions due to
+# individual session, registration, or data-quality problems.
+#
+# Example:
+# CUSTOM_EXCLUDED_PARTICIPANTS = [76, 101]
+CUSTOM_EXCLUDED_PARTICIPANTS = [23, 34, 98]
+
+# Keep this False when DFBETAS is being used as a diagnostic/sensitivity
+# analysis rather than as an exclusion rule.
+DFBETAS_CONTRIBUTES_TO_EXCLUSIONS = False
 
 
 def _timestamp():
@@ -90,10 +111,14 @@ def _thresholds_from_args(args, n_obs):
     }
 
 
+def _default_cooks_threshold(n_obs):
+    return 4.0 / float(n_obs)
+
+
 def _plot_predictor(influence_df, predictor, threshold, out_path):
     label = PREDICTOR_LABELS[predictor]
     d = influence_df.sort_values("participant_number").copy()
-    colors = np.where(d["exclude_flag"], "#b24a2a", "#2f5d8a")
+    colors = np.where(d["dfbetas_exclude_flag"], "#b24a2a", "#2f5d8a")
 
     plt.figure(figsize=(10, 4.8))
     plt.axhline(0.0, color="#333333", linewidth=0.8)
@@ -110,6 +135,58 @@ def _plot_predictor(influence_df, predictor, threshold, out_path):
     plt.xlabel("Participant number")
     plt.ylabel("Leave-one-out DFBETAS")
     plt.title("{} influence on primary NB beta".format(label))
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=180)
+    plt.close()
+
+
+def _plot_cooks_distance(influence_df, threshold, out_path):
+    d = influence_df.sort_values("participant_number").copy()
+    colors = np.where(d["cooks_crosses_threshold"], "#6f2d8f", "#2f5d8a")
+
+    plt.figure(figsize=(10, 4.8))
+    plt.axhline(threshold, color="#6f2d8f", linestyle="--", linewidth=1.0)
+    plt.scatter(
+        d["participant_number"],
+        d["cooks_distance"],
+        c=colors,
+        s=36,
+        edgecolors="white",
+        linewidths=0.6,
+    )
+    plt.xlabel("Participant number")
+    plt.ylabel("Leave-one-out Cook-style distance")
+    plt.title("Primary NB Cook-style influence")
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=180)
+    plt.close()
+
+
+def _plot_dfbetas_vs_cooks(influence_df, cooks_threshold, out_path):
+    d = influence_df.copy()
+    x = d["max_abs_dfbetas"]
+    y = d["cooks_distance"]
+    colors = np.where(
+        d["dfbetas_exclude_flag"] & d["cooks_crosses_threshold"],
+        "#7a1f1f",
+        np.where(d["dfbetas_exclude_flag"], "#b24a2a", np.where(d["cooks_crosses_threshold"], "#6f2d8f", "#2f5d8a")),
+    )
+
+    plt.figure(figsize=(7, 5.2))
+    plt.axvline(d.attrs.get("dfbetas_reference_threshold", np.nan), color="#b24a2a", linestyle="--", linewidth=1.0)
+    plt.axhline(cooks_threshold, color="#6f2d8f", linestyle="--", linewidth=1.0)
+    plt.scatter(x, y, c=colors, s=42, edgecolors="white", linewidths=0.6)
+    for _, row in d.loc[d["dfbetas_exclude_flag"] | d["cooks_crosses_threshold"]].iterrows():
+        plt.annotate(
+            str(int(row["participant_number"])),
+            (row["max_abs_dfbetas"], row["cooks_distance"]),
+            textcoords="offset points",
+            xytext=(4, 4),
+            fontsize=8,
+        )
+    plt.xlabel("Max absolute DFBETAS across primary predictors")
+    plt.ylabel("Cook-style distance")
+    plt.title("DFBETAS vs Cook-style influence")
     plt.tight_layout()
     plt.savefig(out_path, dpi=180)
     plt.close()
@@ -137,19 +214,53 @@ def _plot_combined(influence_df, thresholds, out_path):
     plt.close()
 
 
-def run_purify(infile=INFILE, outfile=OUTFILE, outdir=OUTDIR, thresholds=None):
+def _cook_distance_from_refit(full_fit, loo_params):
+    available_terms = [term for term in COOK_TERMS if term in full_fit.params.index and term in loo_params.index]
+    if not available_terms:
+        return np.nan
+
+    full_params = full_fit.params.reindex(available_terms)
+    loo_params = loo_params.reindex(available_terms)
+    delta = (loo_params - full_params).to_numpy(dtype=float)
+
+    cov = full_fit.cov_params().reindex(index=available_terms, columns=available_terms).to_numpy(dtype=float)
+    cov_inv = np.linalg.pinv(cov)
+    return float(delta.T.dot(cov_inv).dot(delta) / float(len(available_terms)))
+
+
+def run_purify(
+    infile=INFILE,
+    outfile=OUTFILE,
+    outdir=OUTDIR,
+    thresholds=None,
+    cooks_threshold=None,
+    sensitivity_outfile=SENSITIVITY_OUTFILE,
+    sensitivity_excluded_outfile=SENSITIVITY_EXCLUDED_OUTFILE,
+):
     infile = Path(infile)
     outfile = Path(outfile)
     outdir = Path(outdir)
     outdir.mkdir(parents=True, exist_ok=True)
 
     df = pd.read_csv(infile)
-    dat, like_mean, ment_mean = _prepare_model_data(df)
+    df["participant_number"] = pd.to_numeric(df["participant_number"], errors="coerce")
+    custom_excluded_participants = {int(p) for p in CUSTOM_EXCLUDED_PARTICIPANTS}
+    custom_mask = df["participant_number"].isin(custom_excluded_participants)
+    custom_excluded = df.loc[custom_mask, ["exp_sid", "participant_number"]].copy()
+    custom_excluded["participant_number"] = custom_excluded["participant_number"].astype(int)
+    custom_excluded["dfbetas_exclude_flag"] = False
+    custom_excluded["custom_exclude_flag"] = True
+    custom_excluded["exclusion_reason"] = "custom"
+    analysis_df = df.loc[~custom_mask].copy()
+
+    dat, like_mean, ment_mean = _prepare_model_data(analysis_df)
     formula = "{} ~ like_c + ment_c + like_x_ment".format(OUTCOME)
     full_fit = _fit_nb(formula, dat)
 
     if thresholds is None:
         thresholds = {p: _default_threshold(len(dat)) for p in PREDICTORS}
+    if cooks_threshold is None:
+        cooks_threshold = _default_cooks_threshold(len(dat))
 
     full_params = full_fit.params.reindex(PREDICTORS)
     full_se = full_fit.bse.reindex(PREDICTORS).replace(0, np.nan)
@@ -165,11 +276,13 @@ def run_purify(infile=INFILE, outfile=OUTFILE, outdir=OUTDIR, thresholds=None):
             loo_params = loo_fit.params.reindex(PREDICTORS)
             delta = loo_params - full_params
             dfbetas = delta / full_se
+            cooks_distance = _cook_distance_from_refit(full_fit, loo_fit.params)
             out = {
                 "exp_sid": exp_sid,
                 "participant_number": participant_number,
                 "n_full": int(full_fit.nobs),
                 "n_leave_one_out": int(loo_fit.nobs),
+                "cooks_distance": cooks_distance,
             }
             for predictor in PREDICTORS:
                 out["full_beta_{}".format(predictor)] = full_params[predictor]
@@ -193,17 +306,78 @@ def run_purify(infile=INFILE, outfile=OUTFILE, outdir=OUTDIR, thresholds=None):
             influence_df["dfbetas_{}".format(predictor)].abs() > float(thresholds[predictor])
         )
     cross_cols = ["crosses_{}".format(p) for p in PREDICTORS]
-    influence_df["exclude_flag"] = influence_df[cross_cols].any(axis=1)
+    influence_df["dfbetas_exclude_flag"] = influence_df[cross_cols].any(axis=1)
+    influence_df["custom_exclude_flag"] = False
+    influence_df["dfbetas_used_for_exclusion"] = bool(DFBETAS_CONTRIBUTES_TO_EXCLUSIONS)
+    influence_df["exclude_flag"] = (
+        influence_df["dfbetas_exclude_flag"] if DFBETAS_CONTRIBUTES_TO_EXCLUSIONS else False
+    )
+    influence_df["exclusion_reason"] = np.select(
+        [
+            influence_df["exclude_flag"] & influence_df["dfbetas_exclude_flag"],
+        ],
+        ["dfbetas"],
+        default="",
+    )
+    influence_df["max_abs_dfbetas"] = influence_df[["dfbetas_{}".format(p) for p in PREDICTORS]].abs().max(axis=1)
+    influence_df["cooks_threshold"] = float(cooks_threshold)
+    influence_df["cooks_crosses_threshold"] = influence_df["cooks_distance"] > float(cooks_threshold)
+    influence_df.attrs["dfbetas_reference_threshold"] = max(float(v) for v in thresholds.values())
 
-    excluded = influence_df.loc[influence_df["exclude_flag"], ["exp_sid", "participant_number"]].copy()
+    excluded = influence_df.loc[
+        influence_df["exclude_flag"],
+        ["exp_sid", "participant_number", "dfbetas_exclude_flag", "custom_exclude_flag", "exclusion_reason"],
+    ].copy()
+    excluded = pd.concat([custom_excluded, excluded], ignore_index=True)
+    dfbetas_excluded = influence_df.loc[
+        influence_df["dfbetas_exclude_flag"],
+        ["exp_sid", "participant_number", "dfbetas_exclude_flag", "custom_exclude_flag", "exclusion_reason"],
+    ].copy()
+    dfbetas_excluded["exclusion_reason"] = "dfbetas_sensitivity"
+    cooks_targeted = influence_df.loc[
+        influence_df["cooks_crosses_threshold"],
+        ["exp_sid", "participant_number", "cooks_distance", "max_abs_dfbetas", "exclude_flag"],
+    ].copy()
+    comparison_cols = [
+        "exp_sid",
+        "participant_number",
+        "exclude_flag",
+        "dfbetas_exclude_flag",
+        "custom_exclude_flag",
+        "dfbetas_used_for_exclusion",
+        "cooks_crosses_threshold",
+        "max_abs_dfbetas",
+        "cooks_distance",
+    ]
+    comparison_df = influence_df[comparison_cols].copy()
+    comparison_df["targeted_by"] = np.select(
+        [
+            comparison_df["dfbetas_exclude_flag"] & comparison_df["cooks_crosses_threshold"],
+            comparison_df["dfbetas_exclude_flag"] & ~comparison_df["cooks_crosses_threshold"],
+            ~comparison_df["dfbetas_exclude_flag"] & comparison_df["cooks_crosses_threshold"],
+        ],
+        ["both", "dfbetas_only", "cooks_only"],
+        default="neither",
+    )
     purified = df.loc[~df["exp_sid"].isin(set(excluded["exp_sid"]))].copy()
     purified.to_csv(outfile, index=False)
+    dfbetas_sensitivity = analysis_df.loc[
+        ~analysis_df["exp_sid"].isin(set(dfbetas_excluded["exp_sid"]))
+    ].copy()
+    sensitivity_outfile = Path(sensitivity_outfile)
+    sensitivity_excluded_outfile = Path(sensitivity_excluded_outfile)
+    dfbetas_sensitivity.to_csv(sensitivity_outfile, index=False)
+    dfbetas_excluded.to_csv(sensitivity_excluded_outfile, index=False)
 
     stamp = _timestamp()
     influence_csv = outdir / "3_purify_leave_one_out_dfbetas_{}.csv".format(stamp)
+    cooks_csv = outdir / "3_purify_cooks_distance_{}.csv".format(stamp)
+    comparison_csv = outdir / "3_purify_dfbetas_vs_cooks_{}.csv".format(stamp)
     excluded_csv = outdir / "3_purify_excluded_participants_{}.csv".format(stamp)
     summary_txt = outdir / "3_purify_summary_{}.txt".format(stamp)
     influence_df.to_csv(influence_csv, index=False)
+    cooks_targeted.to_csv(cooks_csv, index=False)
+    comparison_df.to_csv(comparison_csv, index=False)
     excluded.to_csv(excluded_csv, index=False)
 
     plot_paths = []
@@ -214,6 +388,12 @@ def run_purify(infile=INFILE, outfile=OUTFILE, outdir=OUTDIR, thresholds=None):
     combined_plot = outdir / "3_purify_dfbetas_combined_{}.png".format(stamp)
     _plot_combined(influence_df, thresholds, combined_plot)
     plot_paths.append(combined_plot)
+    cooks_plot = outdir / "3_purify_cooks_distance_{}.png".format(stamp)
+    _plot_cooks_distance(influence_df, cooks_threshold, cooks_plot)
+    plot_paths.append(cooks_plot)
+    comparison_plot = outdir / "3_purify_dfbetas_vs_cooks_{}.png".format(stamp)
+    _plot_dfbetas_vs_cooks(influence_df, cooks_threshold, comparison_plot)
+    plot_paths.append(comparison_plot)
 
     errors_csv = None
     if errors:
@@ -225,13 +405,27 @@ def run_purify(infile=INFILE, outfile=OUTFILE, outdir=OUTDIR, thresholds=None):
         f.write("input: {}\n".format(infile))
         f.write("output: {}\n".format(outfile))
         f.write("rows_in_input: {}\n".format(len(df)))
-        f.write("rows_used_for_primary_model: {}\n".format(len(dat)))
+        f.write("rows_after_custom_exclusions: {}\n".format(len(analysis_df)))
+        f.write("rows_used_for_dfbetas_model: {}\n".format(len(dat)))
         f.write("rows_in_purified_output: {}\n".format(len(purified)))
+        f.write("dfbetas_sensitivity_output: {}\n".format(sensitivity_outfile))
+        f.write("rows_in_dfbetas_sensitivity_output: {}\n".format(len(dfbetas_sensitivity)))
         f.write("formula: {}\n".format(formula))
         f.write("centering_likeability_mean: {}\n".format(like_mean))
         f.write("centering_mentacy_mean: {}\n".format(ment_mean))
         f.write("thresholds: {}\n".format({PREDICTOR_LABELS[k]: float(v) for k, v in thresholds.items()}))
+        f.write("dfbetas_contributes_to_exclusions: {}\n".format(bool(DFBETAS_CONTRIBUTES_TO_EXCLUSIONS)))
+        f.write("cooks_distance_threshold: {}\n".format(float(cooks_threshold)))
+        f.write("cooks_distance_terms: {}\n".format(", ".join(COOK_TERMS)))
+        f.write("custom_excluded_participants: {}\n".format(sorted(custom_excluded_participants)))
         f.write("excluded_participant_count: {}\n\n".format(len(excluded)))
+        f.write("dfbetas_sensitivity_excluded_participant_count: {}\n".format(len(dfbetas_excluded)))
+        if dfbetas_excluded.empty:
+            f.write("DFBETAS sensitivity excluded participants: None\n\n")
+        else:
+            f.write("DFBETAS sensitivity excluded participants\n")
+            f.write(dfbetas_excluded.to_string(index=False))
+            f.write("\n\n")
         f.write("Full model coefficients\n")
         f.write(full_fit.params.to_string())
         f.write("\n\nExcluded participants\n")
@@ -240,20 +434,44 @@ def run_purify(infile=INFILE, outfile=OUTFILE, outdir=OUTDIR, thresholds=None):
         else:
             f.write(excluded.to_string(index=False))
             f.write("\n")
+        f.write("\nCook's Distance comparison\n")
+        f.write("Cook's Distance is diagnostic only here; it does not affect 3_purified.csv.\n")
+        f.write("Cook-targeted participant count: {}\n".format(len(cooks_targeted)))
+        if cooks_targeted.empty:
+            f.write("Cook-targeted participants: None\n")
+        else:
+            f.write("Cook-targeted participants\n")
+            f.write(cooks_targeted.to_string(index=False))
+            f.write("\n")
+        f.write("\nDFBETAS vs Cook targeting counts\n")
+        f.write(comparison_df["targeted_by"].value_counts().reindex(["both", "dfbetas_only", "cooks_only", "neither"], fill_value=0).to_string())
+        f.write("\n")
         if errors:
             f.write("\nLeave-one-out fit errors\n")
             f.write(pd.DataFrame(errors).to_string(index=False))
             f.write("\n")
 
     print("Input rows: {}".format(len(df)))
-    print("Rows used in primary model: {}".format(len(dat)))
+    print("Rows after custom exclusions: {}".format(len(analysis_df)))
+    print("Rows used in DFBETAS model: {}".format(len(dat)))
+    print("DFBETAS contributes to exclusions: {}".format(bool(DFBETAS_CONTRIBUTES_TO_EXCLUSIONS)))
     print("Excluded participants: {}".format(len(excluded)))
     if not excluded.empty:
         print(excluded.to_string(index=False))
+    print("Cook-targeted participants (diagnostic only): {}".format(len(cooks_targeted)))
+    if not cooks_targeted.empty:
+        print(cooks_targeted.to_string(index=False))
+    print("DFBETAS vs Cook targeting counts:")
+    print(comparison_df["targeted_by"].value_counts().reindex(["both", "dfbetas_only", "cooks_only", "neither"], fill_value=0).to_string())
     print("Output rows: {}".format(len(purified)))
     print("Wrote {}".format(outfile))
+    print("DFBETAS sensitivity rows: {}".format(len(dfbetas_sensitivity)))
+    print("Wrote {}".format(sensitivity_outfile))
+    print("Wrote {}".format(sensitivity_excluded_outfile))
     print("Diagnostics:")
     print("- {}".format(influence_csv))
+    print("- {}".format(cooks_csv))
+    print("- {}".format(comparison_csv))
     print("- {}".format(excluded_csv))
     print("- {}".format(summary_txt))
     for path in plot_paths:
@@ -265,11 +483,19 @@ def run_purify(infile=INFILE, outfile=OUTFILE, outdir=OUTDIR, thresholds=None):
         "data_used": dat,
         "full_fit": full_fit,
         "influence": influence_df,
+        "cooks_targeted": cooks_targeted,
+        "comparison": comparison_df,
         "excluded": excluded,
+        "dfbetas_excluded": dfbetas_excluded,
         "purified": purified,
+        "dfbetas_sensitivity": dfbetas_sensitivity,
         "thresholds": thresholds,
         "influence_csv": influence_csv,
+        "cooks_csv": cooks_csv,
+        "comparison_csv": comparison_csv,
         "excluded_csv": excluded_csv,
+        "sensitivity_outfile": sensitivity_outfile,
+        "sensitivity_excluded_outfile": sensitivity_excluded_outfile,
         "summary_txt": summary_txt,
         "plots": plot_paths,
         "errors": errors,
@@ -282,6 +508,8 @@ def main():
     )
     parser.add_argument("--input", default=os.environ.get("ANALYSIS_INPUT_CSV", str(INFILE)))
     parser.add_argument("--output", default=str(OUTFILE))
+    parser.add_argument("--sensitivity-output", default=str(SENSITIVITY_OUTFILE))
+    parser.add_argument("--sensitivity-excluded-output", default=str(SENSITIVITY_EXCLUDED_OUTFILE))
     parser.add_argument("--outdir", default=str(OUTDIR))
     parser.add_argument(
         "--threshold",
@@ -292,12 +520,30 @@ def main():
     parser.add_argument("--threshold-like", type=float, default=None)
     parser.add_argument("--threshold-ment", type=float, default=None)
     parser.add_argument("--threshold-interaction", type=float, default=None)
+    parser.add_argument(
+        "--cooks-threshold",
+        type=float,
+        default=None,
+        help="Diagnostic Cook-style distance cutoff. Defaults to 4/n. Does not affect exclusions.",
+    )
     args = parser.parse_args()
 
     df = pd.read_csv(args.input)
-    dat, _, _ = _prepare_model_data(df)
+    df["participant_number"] = pd.to_numeric(df["participant_number"], errors="coerce")
+    custom_excluded_participants = {int(p) for p in CUSTOM_EXCLUDED_PARTICIPANTS}
+    df_for_thresholds = df.loc[~df["participant_number"].isin(custom_excluded_participants)].copy()
+    dat, _, _ = _prepare_model_data(df_for_thresholds)
     thresholds = _thresholds_from_args(args, len(dat))
-    run_purify(args.input, args.output, args.outdir, thresholds=thresholds)
+
+    run_purify(
+        args.input,
+        args.output,
+        args.outdir,
+        thresholds=thresholds,
+        cooks_threshold=args.cooks_threshold,
+        sensitivity_outfile=args.sensitivity_output,
+        sensitivity_excluded_outfile=args.sensitivity_excluded_output,
+    )
 
 
 if __name__ == "__main__":

@@ -7,14 +7,12 @@ from pathlib import Path
 
 """
 python3 run_pipeline.py
-That skips script 3 and uses 2_simplified.csv downstream.
-python3 run_pipeline.py --with-exclusions
-That runs script 3 and makes scripts 4/5 use 3_purified.csv.
+That runs scripts 1-6 and uses 3_purified.csv downstream.
 """
 
 HERE = Path(__file__).resolve().parent
-SIMPLIFIED_CSV = HERE / "2_simplified.csv"
 PURIFIED_CSV = HERE / "3_purified.csv"
+DFBETAS_SENSITIVITY_CSV = HERE / "3_dfbetas_sensitivity.csv"
 
 
 def run_script(script_name, env=None):
@@ -27,28 +25,20 @@ def main():
     parser = argparse.ArgumentParser(
         description="Run the ALTRUISM analysis scripts in sequence."
     )
-    parser.add_argument(
-        "--with-exclusions",
-        action="store_true",
-        help="Run 3_exclude.py and use 3_purified.csv for downstream scripts.",
-    )
-    args = parser.parse_args()
+    parser.parse_args()
 
     env = os.environ.copy()
-    downstream_input = PURIFIED_CSV if args.with_exclusions else SIMPLIFIED_CSV
-    env["ANALYSIS_INPUT_CSV"] = str(downstream_input)
+    env["ANALYSIS_INPUT_CSV"] = str(PURIFIED_CSV)
+    env["ANALYSIS_SENSITIVITY_INPUT_CSV"] = str(DFBETAS_SENSITIVITY_CSV)
 
     run_script("1_assemble.py")
     run_script("2_simplify.py")
+    run_script("3_purify.py")
 
-    if args.with_exclusions:
-        run_script("3_exclude.py")
-    else:
-        print("\n=== Skipping 3_exclude.py; downstream scripts will use {} ===".format(SIMPLIFIED_CSV))
-
-    print("Downstream input: {}".format(downstream_input))
+    print("Downstream input: {}".format(PURIFIED_CSV))
     run_script("4_descriptives.py", env=env)
     run_script("5_nb_model.py", env=env)
+    run_script("6_correlations.py", env=env)
 
     print("\nPipeline complete.")
 

@@ -1,0 +1,20 @@
+Zero-order Pearson correlations
+input: /Users/neurorobots/Desktop/repos/ALTRUISM/ANALYSIS/3_purified.csv
+rows_in_input: 99
+variables:
+- mentacy: q_post_specific_mentacy_belief_scale
+- GAToRS_negative: q_post_gators_neg
+- GAToRS_positive: q_post_gators_pos
+- liking: q_post_specific_likeability
+- empathy: q_post_specific_robot_empathy
+
+Requested correlations
+              x               y                             x_column                      y_column  method  n_pairwise         r      p_value  ci95_low  ci95_high
+        mentacy GAToRS_negative q_post_specific_mentacy_belief_scale             q_post_gators_neg pearson          99 -0.122271 2.279473e-01 -0.312149   0.076999
+        mentacy GAToRS_positive q_post_specific_mentacy_belief_scale             q_post_gators_pos pearson          99  0.205649 4.114424e-02  0.008585   0.387336
+        mentacy          liking q_post_specific_mentacy_belief_scale   q_post_specific_likeability pearson          99  0.363871 2.137039e-04  0.179341   0.523666
+        mentacy         empathy q_post_specific_mentacy_belief_scale q_post_specific_robot_empathy pearson          99  0.381799 9.642871e-05  0.199418   0.538615
+GAToRS_negative          liking                    q_post_gators_neg   q_post_specific_likeability pearson          99 -0.196817 5.086945e-02 -0.379485   0.000619
+GAToRS_positive          liking                    q_post_gators_pos   q_post_specific_likeability pearson          99  0.282067 4.675732e-03  0.089647   0.454188
+         liking         empathy          q_post_specific_likeability q_post_specific_robot_empathy pearson          99  0.618693 8.819275e-12  0.479895   0.727277
+ 	

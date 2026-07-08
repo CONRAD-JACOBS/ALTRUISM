@@ -13,7 +13,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-INFILE = Path(os.environ.get("ANALYSIS_INPUT_CSV", ROOT / "ANALYSIS" / "2_simplified.csv"))
+INFILE = Path(os.environ.get("ANALYSIS_INPUT_CSV", ROOT / "ANALYSIS" / "3_purified.csv"))
 #INFILE = ROOT / "ANALYSIS" / "simulated_simplified.csv"   # change if needed
 OUTDIR = ROOT / "ANALYSIS" / "4_descriptives"
 

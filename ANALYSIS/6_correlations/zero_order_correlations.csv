@@ -1,0 +1,8 @@
+x,y,x_column,y_column,method,n_pairwise,r,p_value,ci95_low,ci95_high
+mentacy,GAToRS_negative,q_post_specific_mentacy_belief_scale,q_post_gators_neg,pearson,99,-0.12227135360612479,0.22794726434750476,-0.3121485963277988,0.07699906184039484
+mentacy,GAToRS_positive,q_post_specific_mentacy_belief_scale,q_post_gators_pos,pearson,99,0.20564871340373597,0.04114423746611741,0.008585433827172794,0.3873356841775983
+mentacy,liking,q_post_specific_mentacy_belief_scale,q_post_specific_likeability,pearson,99,0.3638705329882563,0.00021370389464721225,0.17934120602976986,0.5236661884743493
+mentacy,empathy,q_post_specific_mentacy_belief_scale,q_post_specific_robot_empathy,pearson,99,0.3817994872480083,9.642870920904953e-05,0.19941815261315496,0.5386149695605258
+GAToRS_negative,liking,q_post_gators_neg,q_post_specific_likeability,pearson,99,-0.1968172274283258,0.0508694511497727,-0.37948454325089315,0.0006186356976763382
+GAToRS_positive,liking,q_post_gators_pos,q_post_specific_likeability,pearson,99,0.2820671658088393,0.0046757317965356445,0.08964719955691985,0.4541882490166134
+liking,empathy,q_post_specific_likeability,q_post_specific_robot_empathy,pearson,99,0.6186934506820074,8.819274943705026e-12,0.479894719381392,0.7272774922551153

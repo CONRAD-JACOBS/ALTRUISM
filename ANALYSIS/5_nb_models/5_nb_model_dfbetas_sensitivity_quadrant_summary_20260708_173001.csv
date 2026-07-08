@@ -1,0 +1,5 @@
+quadrant,n,mean_completions,median_completions,sd_completions,max_completions
+high_liking__low_mentacy,15,25.0,10.0,35.35129821823077,115
+high_liking__higher_mentacy,44,16.40909090909091,11.0,17.074825998389098,108
+lower_liking__higher_mentacy,21,13.0,10.0,11.224972160321823,43
+lower_liking__low_mentacy,17,8.294117647058824,7.0,5.7311070689085994,25

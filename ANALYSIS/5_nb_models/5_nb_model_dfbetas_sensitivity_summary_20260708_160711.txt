@@ -1,0 +1,111 @@
+Negative Binomial Model Suite
+dataset: dfbetas_sensitivity
+data: /Users/neurorobots/Desktop/repos/ALTRUISM/ANALYSIS/3_dfbetas_sensitivity.csv
+rows_used: 97
+outcome: captcha_post_completions
+
+Model formulas
+- theory_primary_only: captcha_post_completions ~ like_c + ment_c + like_x_ment
+- theory_plus_exploratory: captcha_post_completions ~ like_c + ment_c + like_x_ment + q_post_gators_pos + q_post_gators_neg + q_pre_idaq
+- trivial_only: captcha_post_completions ~ q_pre_captcha_fun + q_pre_captcha_difficulty
+- theory_plus_exploratory_plus_trivial: captcha_post_completions ~ like_c + ment_c + like_x_ment + q_post_gators_pos + q_post_gators_neg + q_pre_idaq + q_pre_captcha_fun + q_pre_captcha_difficulty
+
+Model comparison (lower AIC/BIC preferred)
+                               model             dataset  n_obs  df_model      logLik        AIC        BIC  alpha_est
+                 theory_primary_only dfbetas_sensitivity     97       3.0 -352.307202 714.614404 727.487959   0.592551
+             theory_plus_exploratory dfbetas_sensitivity     97       6.0 -350.614206 717.228412 737.826100   0.571319
+theory_plus_exploratory_plus_trivial dfbetas_sensitivity     97       8.0 -349.173133 718.346266 744.093375   0.553632
+                        trivial_only dfbetas_sensitivity     97       2.0 -363.639683 735.279366 745.578210   0.754649
+
+Nested LR comparisons
+ lr_stat  df_diff  p_value             dataset                                                      comparison
+3.385992        3 0.335852 dfbetas_sensitivity                  theory_primary_only -> theory_plus_exploratory
+2.882147        2 0.236674 dfbetas_sensitivity theory_plus_exploratory -> theory_plus_exploratory_plus_trivial
+
+==== theory_primary_only ====
+                        NegativeBinomial Regression Results                         
+====================================================================================
+Dep. Variable:     captcha_post_completions   No. Observations:                   97
+Model:                     NegativeBinomial   Df Residuals:                       93
+Method:                                 MLE   Df Model:                            3
+Date:                      Wed, 08 Jul 2026   Pseudo R-squ.:                 0.03451
+Time:                              16:07:11   Log-Likelihood:                -352.31
+converged:                             True   LL-Null:                       -364.90
+Covariance Type:                  nonrobust   LLR p-value:                 1.412e-05
+===============================================================================
+                  coef    std err          z      P>|z|      [0.025      0.975]
+-------------------------------------------------------------------------------
+Intercept       2.7448      0.089     30.926      0.000       2.571       2.919
+like_c          0.2396      0.094      2.559      0.010       0.056       0.423
+ment_c          0.0070      0.025      0.274      0.784      -0.043       0.057
+like_x_ment    -0.0750      0.026     -2.902      0.004      -0.126      -0.024
+alpha           0.5926      0.092      6.432      0.000       0.412       0.773
+===============================================================================
+
+==== theory_plus_exploratory ====
+                        NegativeBinomial Regression Results                         
+====================================================================================
+Dep. Variable:     captcha_post_completions   No. Observations:                   97
+Model:                     NegativeBinomial   Df Residuals:                       90
+Method:                                 MLE   Df Model:                            6
+Date:                      Wed, 08 Jul 2026   Pseudo R-squ.:                 0.03915
+Time:                              16:07:11   Log-Likelihood:                -350.61
+converged:                             True   LL-Null:                       -364.90
+Covariance Type:                  nonrobust   LLR p-value:                 7.332e-05
+=====================================================================================
+                        coef    std err          z      P>|z|      [0.025      0.975]
+-------------------------------------------------------------------------------------
+Intercept             3.8447      0.904      4.254      0.000       2.073       5.616
+like_c                0.2190      0.100      2.188      0.029       0.023       0.415
+ment_c                0.0032      0.026      0.126      0.899      -0.047       0.053
+like_x_ment          -0.0815      0.026     -3.122      0.002      -0.133      -0.030
+q_post_gators_pos    -0.1100      0.137     -0.805      0.421      -0.378       0.158
+q_post_gators_neg    -0.1788      0.111     -1.612      0.107      -0.396       0.039
+q_pre_idaq            0.0501      0.078      0.645      0.519      -0.102       0.202
+alpha                 0.5713      0.090      6.378      0.000       0.396       0.747
+=====================================================================================
+
+==== trivial_only ====
+                        NegativeBinomial Regression Results                         
+====================================================================================
+Dep. Variable:     captcha_post_completions   No. Observations:                   97
+Model:                     NegativeBinomial   Df Residuals:                       94
+Method:                                 MLE   Df Model:                            2
+Date:                      Wed, 08 Jul 2026   Pseudo R-squ.:                0.003453
+Time:                              16:07:11   Log-Likelihood:                -363.64
+converged:                             True   LL-Null:                       -364.90
+Covariance Type:                  nonrobust   LLR p-value:                    0.2836
+============================================================================================
+                               coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------
+Intercept                    2.9355      0.345      8.511      0.000       2.259       3.611
+q_pre_captcha_fun            0.0363      0.074      0.489      0.625      -0.109       0.182
+q_pre_captcha_difficulty    -0.1067      0.069     -1.552      0.121      -0.242       0.028
+alpha                        0.7546      0.111      6.827      0.000       0.538       0.971
+============================================================================================
+
+==== theory_plus_exploratory_plus_trivial ====
+                        NegativeBinomial Regression Results                         
+====================================================================================
+Dep. Variable:     captcha_post_completions   No. Observations:                   97
+Model:                     NegativeBinomial   Df Residuals:                       88
+Method:                                 MLE   Df Model:                            8
+Date:                      Wed, 08 Jul 2026   Pseudo R-squ.:                 0.04310
+Time:                              16:07:11   Log-Likelihood:                -349.17
+converged:                             True   LL-Null:                       -364.90
+Covariance Type:                  nonrobust   LLR p-value:                 0.0001166
+============================================================================================
+                               coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------------
+Intercept                    3.5655      1.011      3.527      0.000       1.584       5.547
+like_c                       0.1842      0.102      1.808      0.071      -0.016       0.384
+ment_c                      -0.0011      0.026     -0.041      0.967      -0.052       0.050
+like_x_ment                 -0.0905      0.026     -3.452      0.001      -0.142      -0.039
+q_post_gators_pos           -0.0756      0.139     -0.545      0.586      -0.348       0.196
+q_post_gators_neg           -0.1695      0.109     -1.562      0.118      -0.382       0.043
+q_pre_idaq                   0.0518      0.077      0.674      0.500      -0.099       0.202
+q_pre_captcha_fun            0.0832      0.069      1.204      0.229      -0.052       0.219
+q_pre_captcha_difficulty    -0.0726      0.060     -1.202      0.229      -0.191       0.046
+alpha                        0.5536      0.087      6.335      0.000       0.382       0.725
+============================================================================================
+
