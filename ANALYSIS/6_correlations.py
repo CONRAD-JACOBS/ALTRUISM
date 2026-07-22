@@ -17,7 +17,7 @@ except Exception:
 
 
 VARIABLES = {
-    "mentacy": "q_post_specific_mentacy_belief_scale",
+    "mentism": "q_post_specific_mentism",
     "GAToRS_negative": "q_post_gators_neg",
     "GAToRS_positive": "q_post_gators_pos",
     "liking": "q_post_specific_likeability",
@@ -25,10 +25,10 @@ VARIABLES = {
 }
 
 CORRELATION_PAIRS = [
-    ("mentacy", "GAToRS_negative"),
-    ("mentacy", "GAToRS_positive"),
-    ("mentacy", "liking"),
-    ("mentacy", "empathy"),
+    ("mentism", "GAToRS_negative"),
+    ("mentism", "GAToRS_positive"),
+    ("mentism", "liking"),
+    ("mentism", "empathy"),
     ("GAToRS_negative", "liking"),
     ("GAToRS_positive", "liking"),
     ("liking", "empathy"),

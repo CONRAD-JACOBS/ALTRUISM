@@ -30,7 +30,7 @@ VOICE_CHAT_ARTIFACTS = (
     "session_language_metrics.json",
 )
 
-TEST_AUTO_FILL = False
+TEST_AUTO_FILL = True
 TEST_BYPASS_ROBOT_COMMANDS = False
 EMERGENCY_BYPASS_PRE_CONVERSATION = False
 # In robot stage:

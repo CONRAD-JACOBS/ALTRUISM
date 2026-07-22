@@ -264,11 +264,24 @@ def summarize_questionnaire_stage(df, stage_id):
 
         # ---------- q_post_specific ----------
         elif stage_id == "q_post_specific":
-            comp_1_name = "mentacy_belief_scale"
+            comp_1_name = "mentism"
             comp_2_name = "likeability"
 
-            belief = responses.get("mentacy_belief")
+            belief_raw = responses.get("mentacy_belief")
+            try:
+                belief = int(float(belief_raw))
+            except (TypeError, ValueError):
+                belief = None
+            if belief not in (0, 1):
+                belief = None
             conf = responses.get("belief_confidence")
+
+            # Preserve the raw binary answer separately. Without this column a
+            # mentism composite of zero cannot reveal whether the participant
+            # answered yes (1) or no (0) to whether the robot has a mind.
+            extra_values[f"{stage_id}_robot_has_mind"] = (
+                int(belief) if belief in (0, 1) else None
+            )
 
             if belief == 0:
                 sign = -1

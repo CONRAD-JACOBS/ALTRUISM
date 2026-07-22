@@ -22,9 +22,10 @@ except Exception:
 
 
 OUTCOME = "captcha_post_completions"
+PARTICIPANT_ID = "participant_number"
 PRIMARY = [
     "q_post_specific_likeability",
-    "q_post_specific_mentacy_belief_scale",
+    "q_post_specific_mentism",
 ]
 EXPLORATORY = [
     "q_post_gators_pos",
@@ -46,8 +47,10 @@ def _safe_label(label):
 
 
 def _irr_table(result):
-    p = result.params
+    # alpha is the NB2 dispersion estimate, not a regression coefficient or IRR.
+    p = result.params.drop(labels=["alpha"], errors="ignore")
     ci = result.conf_int()
+    ci = ci.loc[p.index]
     out = pd.DataFrame(
         {
             "coef": p,
@@ -90,7 +93,7 @@ def _plot_outcome_distribution(dat, out_path):
 
 def _plot_primary_interaction_heatmap(dat, out_path):
     like_bins = pd.qcut(dat["q_post_specific_likeability"], q=5, duplicates="drop")
-    ment_bins = pd.cut(dat["q_post_specific_mentacy_belief_scale"], bins=5, include_lowest=True)
+    ment_bins = pd.cut(dat["q_post_specific_mentism"], bins=5, include_lowest=True)
 
     heat = dat.pivot_table(
         index=ment_bins,
@@ -106,8 +109,8 @@ def _plot_primary_interaction_heatmap(dat, out_path):
     plt.xticks(range(len(heat.columns)), [str(c) for c in heat.columns], rotation=30, ha="right")
     plt.yticks(range(len(heat.index)), [str(i) for i in heat.index])
     plt.xlabel("Likeability bins")
-    plt.ylabel("Mentacy bins")
-    plt.title("Mean completions across likeability x mentacy")
+    plt.ylabel("Mentism bins")
+    plt.title("Mean completions across likeability x mentism")
     plt.tight_layout()
     plt.savefig(out_path, dpi=180)
     plt.close()
@@ -142,28 +145,203 @@ def _plot_primary_irr(fit, out_path):
     plt.close()
 
 
+def _nb2_deviance_residuals(observed, predicted, alpha):
+    """Return signed NB2 deviance residuals, or NaNs if alpha is invalid."""
+    y = np.asarray(observed, dtype=float)
+    mu = np.asarray(predicted, dtype=float)
+    if not np.isfinite(alpha) or alpha <= 0 or np.any(mu <= 0):
+        return np.full(len(y), np.nan)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        y_term = np.where(y == 0, 0.0, y * np.log(y / mu))
+        size = 1.0 / alpha
+        deviance = 2.0 * (
+            y_term - (y + size) * np.log((y + size) / (mu + size))
+        )
+    # Tiny negative values can occur because of floating-point rounding.
+    return np.sign(y - mu) * np.sqrt(np.maximum(deviance, 0.0))
+
+
+def _plot_nb_diagnostics(diagnostics, out_dir, dataset_label, stamp):
+    prefix = "5_nb_model_{}_diagnostics_".format(dataset_label)
+    paths = []
+
+    observed_path = os.path.join(out_dir, prefix + "observed_vs_predicted_{}.png".format(stamp))
+    fig, ax = plt.subplots(figsize=(6.5, 5.2))
+    ax.scatter(
+        diagnostics["predicted_count"], diagnostics["observed_count"],
+        s=34, alpha=0.58, color="#2f5d8a", edgecolors="white", linewidths=0.4,
+    )
+    upper = max(diagnostics["predicted_count"].max(), diagnostics["observed_count"].max())
+    ax.plot([0, upper], [0, upper], linestyle="--", color="#555555", linewidth=1)
+    ax.set_xlabel("Predicted CAPTCHA completions (expected count)")
+    ax.set_ylabel("Observed CAPTCHA completions")
+    ax.set_title("Observed vs predicted CAPTCHA completions")
+    plt.tight_layout()
+    plt.savefig(observed_path, dpi=300)
+    plt.close(fig)
+    paths.append(observed_path)
+
+    pearson_path = os.path.join(out_dir, prefix + "pearson_residuals_vs_fitted_{}.png".format(stamp))
+    fig, ax = plt.subplots(figsize=(6.5, 5.2))
+    ax.scatter(
+        diagnostics["predicted_count"], diagnostics["pearson_residual"],
+        s=34, alpha=0.58, color="#2f5d8a", edgecolors="white", linewidths=0.4,
+    )
+    ax.axhline(0, color="#333333", linewidth=1)
+    ax.axhline(2, color="#777777", linestyle="--", linewidth=0.8, alpha=0.45)
+    ax.axhline(-2, color="#777777", linestyle="--", linewidth=0.8, alpha=0.45)
+    ax.set_xlabel("Predicted CAPTCHA completions (expected count)")
+    ax.set_ylabel("Pearson residual")
+    ax.set_title("Pearson residuals vs predicted CAPTCHA completions")
+    plt.tight_layout()
+    plt.savefig(pearson_path, dpi=300)
+    plt.close(fig)
+    paths.append(pearson_path)
+
+    quadrant_order = [
+        "lower_liking__low_mentism", "high_liking__low_mentism",
+        "lower_liking__higher_mentism", "high_liking__higher_mentism",
+    ]
+    quadrant_path = os.path.join(out_dir, prefix + "pearson_residuals_by_quadrant_{}.png".format(stamp))
+    fig, ax = plt.subplots(figsize=(8.2, 5.2))
+    groups = [diagnostics.loc[diagnostics["quadrant"] == q, "pearson_residual"].dropna() for q in quadrant_order]
+    ax.boxplot(
+        groups, tick_labels=[q.replace("__", "\n").replace("_", " ") for q in quadrant_order],
+        patch_artist=True,
+        boxprops={"facecolor": "#b7c7d8", "edgecolor": "#4a5968"},
+        medianprops={"color": "#7a3426", "linewidth": 1.4},
+        whiskerprops={"color": "#4a5968"}, capprops={"color": "#4a5968"},
+        flierprops={"marker": "o", "markersize": 3, "alpha": 0.35, "markerfacecolor": "#2f5d8a"},
+    )
+    rng = np.random.default_rng(20260713)
+    for position, values in enumerate(groups, start=1):
+        ax.scatter(
+            rng.normal(position, 0.055, len(values)), values,
+            s=18, alpha=0.38, color="#2f5d8a", edgecolors="none",
+        )
+    ax.axhline(0, color="#333333", linewidth=1)
+    ax.set_ylabel("Pearson residual")
+    ax.set_xlabel("Liking x mentism quadrant (centered-variable split at 0)")
+    ax.set_title("Pearson residuals by liking x mentism quadrant")
+    plt.tight_layout()
+    plt.savefig(quadrant_path, dpi=300)
+    plt.close(fig)
+    paths.append(quadrant_path)
+    return paths
+
+
+def _write_nb_diagnostics(dat, fit, formula, out_dir, dataset_label, stamp):
+    """Save participant-level diagnostics for the primary NB2 theory model."""
+    predicted = np.asarray(fit.predict(dat), dtype=float)
+    observed = dat[OUTCOME].to_numpy(dtype=float)
+    alpha = float(fit.params.get("alpha", np.nan))
+    raw = observed - predicted
+
+    # Pearson residuals standardize raw errors by the model-implied NB2
+    # variance: Var(Y|X) = mu + alpha * mu^2.
+    variance = predicted + alpha * predicted ** 2
+    with np.errstate(divide="ignore", invalid="ignore"):
+        pearson = raw / np.sqrt(variance)
+
+    diagnostics = pd.DataFrame({
+        "participant_id": dat[PARTICIPANT_ID].to_numpy(),
+        "observed_count": observed,
+        "predicted_count": predicted,
+        "raw_residual": raw,
+        "pearson_residual": pearson,
+        "deviance_residual": _nb2_deviance_residuals(observed, predicted, alpha),
+        "liking": dat[PRIMARY[0]].to_numpy(),
+        "mentism": dat[PRIMARY[1]].to_numpy(),
+        "interaction": dat["like_x_mentism"].to_numpy(),
+    })
+    diagnostics["quadrant"] = np.select(
+        [
+            (dat["like_c"] < 0) & (dat["mentism_c"] < 0),
+            (dat["like_c"] >= 0) & (dat["mentism_c"] < 0),
+            (dat["like_c"] < 0) & (dat["mentism_c"] >= 0),
+        ],
+        [
+            "lower_liking__low_mentism", "high_liking__low_mentism",
+            "lower_liking__higher_mentism",
+        ],
+        default="high_liking__higher_mentism",
+    )
+
+    prefix = "5_nb_model_{}_diagnostics_".format(dataset_label)
+    values_path = os.path.join(out_dir, prefix + "values_{}.csv".format(stamp))
+    diagnostics.to_csv(values_path, index=False)
+
+    invalid = ~np.isfinite(predicted) | (predicted < 0) | ~np.isfinite(variance) | (variance <= 0)
+    problematic_path = None
+    if invalid.any():
+        problematic_path = os.path.join(out_dir, prefix + "problematic_predictions_{}.csv".format(stamp))
+        diagnostics.loc[invalid].to_csv(problematic_path, index=False)
+        print("WARNING: {} rows have invalid predictions or NB variance; saved to {}".format(invalid.sum(), problematic_path))
+
+    valid = diagnostics.loc[~invalid].copy()
+    plot_paths = []
+    if valid.empty:
+        print("WARNING: No valid fitted values remain, so diagnostic plots were skipped.")
+    else:
+        plot_paths = _plot_nb_diagnostics(valid, out_dir, dataset_label, stamp)
+    top_pearson = diagnostics.assign(abs_residual=diagnostics["pearson_residual"].abs()).nlargest(10, "abs_residual")
+    top_raw = diagnostics.assign(abs_residual=diagnostics["raw_residual"].abs()).nlargest(10, "abs_residual")
+    concise = (
+        "Primary NB diagnostics\n"
+        "model formula: {}\nrows used: {}\nAIC: {:.6f}\nBIC: {:.6f}\n"
+        "log likelihood: {:.6f}\nalpha estimate: {:.6f}\n"
+        "mean observed count: {:.6f}\nmean predicted count: {:.6f}\n"
+        "Pearson residual mean: {:.6f}\nPearson residual SD: {:.6f}\n"
+        "quadrant split: 0 on mean-centered like_c and mentism_c\n"
+    ).format(
+        formula, len(diagnostics), fit.aic, getattr(fit, "bic", np.nan), fit.llf, alpha,
+        diagnostics["observed_count"].mean(), diagnostics["predicted_count"].mean(),
+        diagnostics["pearson_residual"].mean(), diagnostics["pearson_residual"].std(ddof=1),
+    )
+    summary_path = os.path.join(out_dir, prefix + "summary_{}.txt".format(stamp))
+    with open(summary_path, "w") as f:
+        f.write(concise)
+        f.write("\nCoefficient table\n{}\n".format(fit.summary2().tables[1].to_string()))
+        f.write("\nTop 10 participants by absolute Pearson residual\n")
+        f.write(top_pearson.drop(columns="abs_residual").to_string(index=False))
+        f.write("\n\nTop 10 participants by absolute raw residual\n")
+        f.write(top_raw.drop(columns="abs_residual").to_string(index=False))
+        f.write("\n")
+    print("\n" + concise)
+    print("Coefficient table:")
+    print(fit.summary2().tables[1].to_string())
+    print("Top 10 participants by absolute Pearson residual:")
+    print(top_pearson[["participant_id", "pearson_residual", "observed_count", "predicted_count"]].to_string(index=False))
+    print("\nTop 10 participants by absolute raw residual:")
+    print(top_raw[["participant_id", "raw_residual", "observed_count", "predicted_count"]].to_string(index=False))
+    paths = [values_path, summary_path] + plot_paths
+    if problematic_path:
+        paths.append(problematic_path)
+    return paths
+
+
 def _primary_prediction_grid(dat, fit, focal, moderator, moderator_values):
     focal_values = np.linspace(dat[focal].min(), dat[focal].max(), 80)
     rows = []
     like_mean = dat["q_post_specific_likeability"].mean()
-    ment_mean = dat["q_post_specific_mentacy_belief_scale"].mean()
+    mentism_mean = dat["q_post_specific_mentism"].mean()
 
     for label, moderator_value in moderator_values:
         for focal_value in focal_values:
             like = focal_value if focal == "q_post_specific_likeability" else moderator_value
-            ment = focal_value if focal == "q_post_specific_mentacy_belief_scale" else moderator_value
+            mentism = focal_value if focal == "q_post_specific_mentism" else moderator_value
             like_c = like - like_mean
-            ment_c = ment - ment_mean
+            mentism_c = mentism - mentism_mean
             rows.append({
                 "focal": focal,
                 "moderator": moderator,
                 "moderator_level": label,
                 "moderator_value": moderator_value,
                 "q_post_specific_likeability": like,
-                "q_post_specific_mentacy_belief_scale": ment,
+                "q_post_specific_mentism": mentism,
                 "like_c": like_c,
-                "ment_c": ment_c,
-                "like_x_ment": like_c * ment_c,
+                "mentism_c": mentism_c,
+                "like_x_mentism": like_c * mentism_c,
             })
 
     grid = pd.DataFrame(rows)
@@ -198,13 +376,13 @@ def _plot_prediction_lines(grid, x_col, x_label, title, out_path):
 def _plot_raw_interaction_scatter(dat, out_path):
     rng = np.random.default_rng(20260708)
     x = dat["q_post_specific_likeability"].to_numpy(dtype=float)
-    y = dat["q_post_specific_mentacy_belief_scale"].to_numpy(dtype=float)
+    y = dat["q_post_specific_mentism"].to_numpy(dtype=float)
     z = dat[OUTCOME].to_numpy(dtype=float)
     x_jitter = x + rng.normal(0, 0.045, size=len(dat))
     y_jitter = y + rng.normal(0, 0.10, size=len(dat))
 
     like_q75 = dat["q_post_specific_likeability"].quantile(0.75)
-    ment_q25 = dat["q_post_specific_mentacy_belief_scale"].quantile(0.25)
+    mentism_q25 = dat["q_post_specific_mentism"].quantile(0.25)
 
     plt.figure(figsize=(7.2, 5.2))
     sc = plt.scatter(
@@ -218,18 +396,18 @@ def _plot_raw_interaction_scatter(dat, out_path):
         linewidths=0.5,
     )
     plt.axvline(like_q75, color="#b24a2a", linestyle="--", linewidth=1)
-    plt.axhline(ment_q25, color="#b24a2a", linestyle="--", linewidth=1)
+    plt.axhline(mentism_q25, color="#b24a2a", linestyle="--", linewidth=1)
     plt.fill_between(
         [like_q75, dat["q_post_specific_likeability"].max() + 0.25],
-        dat["q_post_specific_mentacy_belief_scale"].min() - 0.5,
-        ment_q25,
+        dat["q_post_specific_mentism"].min() - 0.5,
+        mentism_q25,
         color="#b24a2a",
         alpha=0.08,
     )
     plt.colorbar(sc, label="Post-task completions")
     plt.xlabel("Liking")
-    plt.ylabel("Mentacy belief")
-    plt.title("Raw interaction scatter: completions across liking x mentacy")
+    plt.ylabel("Mentism")
+    plt.title("Raw interaction scatter: completions across liking x mentism")
     plt.tight_layout()
     plt.savefig(out_path, dpi=180)
     plt.close()
@@ -237,19 +415,19 @@ def _plot_raw_interaction_scatter(dat, out_path):
 
 def _binned_interaction_summary(dat):
     like_q75 = dat["q_post_specific_likeability"].quantile(0.75)
-    ment_q25 = dat["q_post_specific_mentacy_belief_scale"].quantile(0.25)
+    mentism_q25 = dat["q_post_specific_mentism"].quantile(0.25)
     out = dat.copy()
     out["liking_zone"] = np.where(
         out["q_post_specific_likeability"] >= like_q75,
         "high_liking",
         "lower_liking",
     )
-    out["mentacy_zone"] = np.where(
-        out["q_post_specific_mentacy_belief_scale"] <= ment_q25,
-        "low_mentacy",
-        "higher_mentacy",
+    out["mentism_zone"] = np.where(
+        out["q_post_specific_mentism"] <= mentism_q25,
+        "low_mentism",
+        "higher_mentism",
     )
-    out["quadrant"] = out["liking_zone"] + "__" + out["mentacy_zone"]
+    out["quadrant"] = out["liking_zone"] + "__" + out["mentism_zone"]
     summary = (
         out.groupby("quadrant", observed=False)[OUTCOME]
         .agg(n="size", mean_completions="mean", median_completions="median", sd_completions="std", max_completions="max")
@@ -261,7 +439,7 @@ def _binned_interaction_summary(dat):
 
 def _plot_quadrant_means(summary, out_path):
     d = summary.sort_values("mean_completions", ascending=True)
-    colors = np.where(d["quadrant"].eq("high_liking__low_mentacy"), "#b24a2a", "#2f5d8a")
+    colors = np.where(d["quadrant"].eq("high_liking__low_mentism"), "#b24a2a", "#2f5d8a")
     labels = [q.replace("__", "\n").replace("_", " ") for q in d["quadrant"]]
 
     plt.figure(figsize=(7.4, 4.8))
@@ -269,7 +447,7 @@ def _plot_quadrant_means(summary, out_path):
     for i, (_, row) in enumerate(d.iterrows()):
         plt.text(row["mean_completions"], i, "  n={}".format(int(row["n"])), va="center", fontsize=9)
     plt.xlabel("Mean post-task completions")
-    plt.title("Binned means by liking/mentacy quadrant")
+    plt.title("Binned means by liking/mentism quadrant")
     plt.tight_layout()
     plt.savefig(out_path, dpi=180)
     plt.close()
@@ -279,10 +457,10 @@ def _write_interaction_plots(dat, fit, out_dir, dataset_label, stamp):
     plot_paths = []
     csv_paths = []
 
-    ment_levels = [
-        ("low", dat["q_post_specific_mentacy_belief_scale"].quantile(0.25)),
-        ("medium", dat["q_post_specific_mentacy_belief_scale"].quantile(0.50)),
-        ("high", dat["q_post_specific_mentacy_belief_scale"].quantile(0.75)),
+    mentism_levels = [
+        ("low", dat["q_post_specific_mentism"].quantile(0.25)),
+        ("medium", dat["q_post_specific_mentism"].quantile(0.50)),
+        ("high", dat["q_post_specific_mentism"].quantile(0.75)),
     ]
     like_levels = [
         ("low", dat["q_post_specific_likeability"].quantile(0.25)),
@@ -294,43 +472,43 @@ def _write_interaction_plots(dat, fit, out_dir, dataset_label, stamp):
         dat,
         fit,
         "q_post_specific_likeability",
-        "q_post_specific_mentacy_belief_scale",
-        ment_levels,
+        "q_post_specific_mentism",
+        mentism_levels,
     )
-    liking_grid_path = os.path.join(out_dir, "5_nb_model_{}_predicted_liking_by_mentacy_{}.csv".format(dataset_label, stamp))
+    liking_grid_path = os.path.join(out_dir, "5_nb_model_{}_predicted_liking_by_mentism_{}.csv".format(dataset_label, stamp))
     liking_grid.to_csv(liking_grid_path, index=False)
     csv_paths.append(liking_grid_path)
-    liking_plot = os.path.join(out_dir, "5_nb_model_{}_predicted_liking_by_mentacy_{}.png".format(dataset_label, stamp))
+    liking_plot = os.path.join(out_dir, "5_nb_model_{}_predicted_liking_by_mentism_{}.png".format(dataset_label, stamp))
     _plot_prediction_lines(
         liking_grid,
         "q_post_specific_likeability",
         "Liking",
-        "Predicted completions by liking at low / medium / high mentacy",
+        "Predicted completions by liking at low / medium / high mentism",
         liking_plot,
     )
     plot_paths.append(liking_plot)
 
-    mentacy_grid = _primary_prediction_grid(
+    mentism_grid = _primary_prediction_grid(
         dat,
         fit,
-        "q_post_specific_mentacy_belief_scale",
+        "q_post_specific_mentism",
         "q_post_specific_likeability",
         like_levels,
     )
-    mentacy_grid_path = os.path.join(out_dir, "5_nb_model_{}_predicted_mentacy_by_liking_{}.csv".format(dataset_label, stamp))
-    mentacy_grid.to_csv(mentacy_grid_path, index=False)
-    csv_paths.append(mentacy_grid_path)
-    mentacy_plot = os.path.join(out_dir, "5_nb_model_{}_predicted_mentacy_by_liking_{}.png".format(dataset_label, stamp))
+    mentism_grid_path = os.path.join(out_dir, "5_nb_model_{}_predicted_mentism_by_liking_{}.csv".format(dataset_label, stamp))
+    mentism_grid.to_csv(mentism_grid_path, index=False)
+    csv_paths.append(mentism_grid_path)
+    mentism_plot = os.path.join(out_dir, "5_nb_model_{}_predicted_mentism_by_liking_{}.png".format(dataset_label, stamp))
     _plot_prediction_lines(
-        mentacy_grid,
-        "q_post_specific_mentacy_belief_scale",
-        "Mentacy belief",
-        "Predicted completions by mentacy at low / medium / high liking",
-        mentacy_plot,
+        mentism_grid,
+        "q_post_specific_mentism",
+        "Mentism",
+        "Predicted completions by mentism at low / medium / high liking",
+        mentism_plot,
     )
-    plot_paths.append(mentacy_plot)
+    plot_paths.append(mentism_plot)
 
-    scatter_plot = os.path.join(out_dir, "5_nb_model_{}_raw_liking_mentacy_scatter_{}.png".format(dataset_label, stamp))
+    scatter_plot = os.path.join(out_dir, "5_nb_model_{}_raw_liking_mentism_scatter_{}.png".format(dataset_label, stamp))
     _plot_raw_interaction_scatter(dat, scatter_plot)
     plot_paths.append(scatter_plot)
 
@@ -361,27 +539,36 @@ def run_nb_model_suite(csv_path, out_dir=None, dataset_label="primary"):
     if missing:
         raise ValueError("Missing required columns: {}".format(", ".join(missing)))
 
-    dat = df[need].copy()
+    if PARTICIPANT_ID not in df.columns:
+        df[PARTICIPANT_ID] = np.arange(1, len(df) + 1)
+        print("Participant ID column '{}' not found; using 1-based source row IDs.".format(PARTICIPANT_ID))
+    elif df[PARTICIPANT_ID].isna().any():
+        missing_id = df[PARTICIPANT_ID].isna()
+        df.loc[missing_id, PARTICIPANT_ID] = "row_" + (df.index[missing_id] + 1).astype(str)
+        print("Filled {} missing participant IDs with source row IDs.".format(missing_id.sum()))
+    dat = df[[PARTICIPANT_ID] + need].copy()
     for c in need:
         dat[c] = pd.to_numeric(dat[c], errors="coerce")
-    dat = dat.dropna().copy()
+    # Drop rows only for variables used across the fitted model suite. Participant
+    # IDs are labels and therefore never determine complete-case inclusion.
+    dat = dat.dropna(subset=need).copy()
 
     if dat.empty:
         raise ValueError("No complete rows remain after numeric coercion + dropna.")
 
     # Center primary terms so interaction is easier to interpret.
     dat["like_c"] = dat["q_post_specific_likeability"] - dat["q_post_specific_likeability"].mean()
-    dat["ment_c"] = dat["q_post_specific_mentacy_belief_scale"] - dat["q_post_specific_mentacy_belief_scale"].mean()
-    dat["like_x_ment"] = dat["like_c"] * dat["ment_c"]
+    dat["mentism_c"] = dat["q_post_specific_mentism"] - dat["q_post_specific_mentism"].mean()
+    dat["like_x_mentism"] = dat["like_c"] * dat["mentism_c"]
 
     formulas = {
-        "theory_primary_only": "{} ~ like_c + ment_c + like_x_ment".format(OUTCOME),
+        "theory_primary_only": "{} ~ like_c + mentism_c + like_x_mentism".format(OUTCOME),
         "theory_plus_exploratory": (
-            "{} ~ like_c + ment_c + like_x_ment + q_post_gators_pos + q_post_gators_neg + q_pre_idaq".format(OUTCOME)
+            "{} ~ like_c + mentism_c + like_x_mentism + q_post_gators_pos + q_post_gators_neg + q_pre_idaq".format(OUTCOME)
         ),
         "trivial_only": "{} ~ q_pre_captcha_fun + q_pre_captcha_difficulty".format(OUTCOME),
         "theory_plus_exploratory_plus_trivial": (
-            "{} ~ like_c + ment_c + like_x_ment + q_post_gators_pos + q_post_gators_neg + q_pre_idaq + "
+            "{} ~ like_c + mentism_c + like_x_mentism + q_post_gators_pos + q_post_gators_neg + q_pre_idaq + "
             "q_pre_captcha_fun + q_pre_captcha_difficulty".format(OUTCOME)
         ),
     }
@@ -455,7 +642,7 @@ def run_nb_model_suite(csv_path, out_dir=None, dataset_label="primary"):
     _plot_outcome_distribution(dat, outcome_plot)
     plot_paths.append(outcome_plot)
 
-    interaction_plot = os.path.join(out_dir, "5_nb_model_{}_like_x_ment_heatmap_{}.png".format(dataset_label, stamp))
+    interaction_plot = os.path.join(out_dir, "5_nb_model_{}_like_x_mentism_heatmap_{}.png".format(dataset_label, stamp))
     _plot_primary_interaction_heatmap(dat, interaction_plot)
     plot_paths.append(interaction_plot)
 
@@ -472,9 +659,18 @@ def run_nb_model_suite(csv_path, out_dir=None, dataset_label="primary"):
         )
         plot_paths.extend(interaction_plot_paths)
         extra_csv_paths = interaction_csv_paths
+        diagnostic_paths = _write_nb_diagnostics(
+            dat,
+            fits["theory_primary_only"],
+            formulas["theory_primary_only"],
+            out_dir,
+            dataset_label,
+            stamp,
+        )
     else:
         quadrant_summary = pd.DataFrame()
         extra_csv_paths = []
+        diagnostic_paths = []
 
     summary_txt = os.path.join(out_dir, "5_nb_model_{}_summary_{}.txt".format(dataset_label, stamp))
     with open(summary_txt, "w") as f:
@@ -494,7 +690,7 @@ def run_nb_model_suite(csv_path, out_dir=None, dataset_label="primary"):
             f.write(lr_df.to_string(index=False))
             f.write("\n\n")
         if not quadrant_summary.empty:
-            f.write("Liking x mentacy quadrant means\n")
+            f.write("Liking x mentism quadrant means\n")
             f.write(quadrant_summary.to_string(index=False))
             f.write("\n\n")
         if errors:
@@ -521,6 +717,8 @@ def run_nb_model_suite(csv_path, out_dir=None, dataset_label="primary"):
         print("- {}".format(p))
     for p in plot_paths:
         print("- {}".format(p))
+    for p in diagnostic_paths:
+        print("- {}".format(p))
     if errors:
         print("\nSome models failed:")
         for k, v in errors.items():
@@ -543,6 +741,7 @@ def run_nb_model_suite(csv_path, out_dir=None, dataset_label="primary"):
         "irr_csvs": irr_paths,
         "extra_csvs": extra_csv_paths,
         "plots": plot_paths,
+        "diagnostics": diagnostic_paths,
     }
 
 

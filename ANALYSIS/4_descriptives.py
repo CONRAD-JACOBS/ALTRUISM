@@ -20,6 +20,7 @@ OUTDIR = ROOT / "ANALYSIS" / "4_descriptives"
 # Columns to use for the sanity checks (adjust if you rename)
 COMPLETIONS_COL = "captcha_post_completions"
 TIME_COL = "captcha_post_total_time"
+MIND_BINARY_COL = "q_post_specific_robot_has_mind"
 
 
 def ensure_dir(p: Path):
@@ -118,6 +119,10 @@ def main():
     completions = df[COMPLETIONS_COL]
     time_sec = df[TIME_COL]
 
+    if MIND_BINARY_COL not in df.columns:
+        raise RuntimeError(f"Missing required column: {MIND_BINARY_COL}")
+    mind_binary = safe_numeric(df[MIND_BINARY_COL])
+
     n_total = len(df)
     n_comp_nonmissing = int(completions.notna().sum())
     n_time_nonmissing = int(time_sec.notna().sum())
@@ -151,7 +156,8 @@ def main():
         "q_pre_2050_mean_futurism_score",
         "q_post_gators_pos",
         "q_post_gators_neg",
-        "q_post_specific_mentacy_belief_scale",
+        "q_post_specific_mentism",
+        MIND_BINARY_COL,
         "q_post_specific_likeability",
         "q_post_specific_robot_empathy",
     ]
@@ -183,6 +189,13 @@ def main():
         "n_zero_completion": n_zero_completion,
         "pct_zero_completion": pct_zero_completion,
         "corr(time, completions)": corr_ct,
+        "robot_has_mind_yes_n": int(mind_binary.eq(1).sum()),
+        "robot_has_mind_no_n": int(mind_binary.eq(0).sum()),
+        "robot_has_mind_missing_n": int(mind_binary.isna().sum()),
+        "robot_has_mind_yes_pct_valid": (
+            float(mind_binary.eq(1).sum() / mind_binary.isin([0, 1]).sum() * 100.0)
+            if mind_binary.isin([0, 1]).any() else np.nan
+        ),
     }])
 
     # Save CSV outputs

@@ -18,7 +18,7 @@ import statsmodels.formula.api as smf
 """
 I used a conservative default cutoff of max(0.50, 2/sqrt(n)), which is 0.50 for the current sample. You can adjust it with:
 python3 ALTRUISM/ANALYSIS/3_purify.py --threshold 0.75
-python3 ALTRUISM/ANALYSIS/3_purify.py --threshold-like 0.75 --threshold-ment 0.6 --threshold-interaction 0.8
+python3 ALTRUISM/ANALYSIS/3_purify.py --threshold-like 0.75 --threshold-mentism 0.6 --threshold-interaction 0.8
 
 By default, DFBETAS is diagnostic only and does not affect 3_purified.csv.
 To make DFBETAS contribute to 3_purified.csv exclusions, set:
@@ -39,12 +39,12 @@ OUTDIR = HERE / "3_purify"
 
 OUTCOME = "captcha_post_completions"
 LIKE_COL = "q_post_specific_likeability"
-MENT_COL = "q_post_specific_mentacy_belief_scale"
-PREDICTORS = ["like_c", "ment_c", "like_x_ment"]
+MENT_COL = "q_post_specific_mentism"
+PREDICTORS = ["like_c", "mentism_c", "like_x_mentism"]
 PREDICTOR_LABELS = {
     "like_c": "LIKING",
-    "ment_c": "MENT",
-    "like_x_ment": "LIKINGxMENT",
+    "mentism_c": "MENTISM",
+    "like_x_mentism": "LIKINGxMENTISM",
 }
 COOK_TERMS = ["Intercept"] + PREDICTORS
 
@@ -57,7 +57,7 @@ DEFAULT_THRESHOLD_FLOOR = 0.50
 #
 # Example:
 # CUSTOM_EXCLUDED_PARTICIPANTS = [76, 101]
-CUSTOM_EXCLUDED_PARTICIPANTS = [23, 34, 98]
+CUSTOM_EXCLUDED_PARTICIPANTS = [34, 98]
 
 # Keep this False when DFBETAS is being used as a diagnostic/sensitivity
 # analysis rather than as an exclusion rule.
@@ -90,8 +90,8 @@ def _prepare_model_data(df):
     like_mean = dat[LIKE_COL].mean()
     ment_mean = dat[MENT_COL].mean()
     dat["like_c"] = dat[LIKE_COL] - like_mean
-    dat["ment_c"] = dat[MENT_COL] - ment_mean
-    dat["like_x_ment"] = dat["like_c"] * dat["ment_c"]
+    dat["mentism_c"] = dat[MENT_COL] - ment_mean
+    dat["like_x_mentism"] = dat["like_c"] * dat["mentism_c"]
     dat["participant_number"] = dat["participant_number"].astype(int)
     return dat, like_mean, ment_mean
 
@@ -106,8 +106,8 @@ def _thresholds_from_args(args, n_obs):
         default = _default_threshold(n_obs)
     return {
         "like_c": args.threshold_like if args.threshold_like is not None else default,
-        "ment_c": args.threshold_ment if args.threshold_ment is not None else default,
-        "like_x_ment": args.threshold_interaction if args.threshold_interaction is not None else default,
+        "mentism_c": args.threshold_mentism if args.threshold_mentism is not None else default,
+        "like_x_mentism": args.threshold_interaction if args.threshold_interaction is not None else default,
     }
 
 
@@ -254,7 +254,7 @@ def run_purify(
     analysis_df = df.loc[~custom_mask].copy()
 
     dat, like_mean, ment_mean = _prepare_model_data(analysis_df)
-    formula = "{} ~ like_c + ment_c + like_x_ment".format(OUTCOME)
+    formula = "{} ~ like_c + mentism_c + like_x_mentism".format(OUTCOME)
     full_fit = _fit_nb(formula, dat)
 
     if thresholds is None:
@@ -412,7 +412,7 @@ def run_purify(
         f.write("rows_in_dfbetas_sensitivity_output: {}\n".format(len(dfbetas_sensitivity)))
         f.write("formula: {}\n".format(formula))
         f.write("centering_likeability_mean: {}\n".format(like_mean))
-        f.write("centering_mentacy_mean: {}\n".format(ment_mean))
+        f.write("centering_mentism_mean: {}\n".format(ment_mean))
         f.write("thresholds: {}\n".format({PREDICTOR_LABELS[k]: float(v) for k, v in thresholds.items()}))
         f.write("dfbetas_contributes_to_exclusions: {}\n".format(bool(DFBETAS_CONTRIBUTES_TO_EXCLUSIONS)))
         f.write("cooks_distance_threshold: {}\n".format(float(cooks_threshold)))
@@ -518,7 +518,11 @@ def main():
         help="Default absolute DFBETAS cutoff for all predictors. Defaults to max(0.50, 2/sqrt(n)).",
     )
     parser.add_argument("--threshold-like", type=float, default=None)
-    parser.add_argument("--threshold-ment", type=float, default=None)
+    parser.add_argument(
+        "--threshold-mentism", "--threshold-ment",
+        dest="threshold_mentism", type=float, default=None,
+        help="Absolute DFBETAS cutoff for mentism (legacy alias: --threshold-ment).",
+    )
     parser.add_argument("--threshold-interaction", type=float, default=None)
     parser.add_argument(
         "--cooks-threshold",

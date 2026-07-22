@@ -153,11 +153,14 @@ def simulate_one(
     # -----------------------
     q_post_specific_total_time = rlognorm_bounded(rng, median=8.0, sigma=0.50, lo=3.0, hi=180.0)
 
-    # mentacy belief scale in [-6, 6], integer
+    # Mentism composite in [-6, 6], integer.
     # tends to be higher with anthro/liking
-    mentacy_lat = 0.9 * anthro_trait + 0.3 * liking + rng.normal(0, 0.8)
-    mentacy_scaled = int(np.clip(round(mentacy_lat * 2.0), -6, 6))
-    q_post_specific_mentacy_belief_scale = mentacy_scaled
+    mentism_lat = 0.9 * anthro_trait + 0.3 * liking + rng.normal(0, 0.8)
+    mentism_scaled = int(np.clip(round(mentism_lat * 2.0), -6, 6))
+    q_post_specific_mentism = mentism_scaled
+    q_post_specific_robot_has_mind = int(
+        mentism_scaled > 0 or (mentism_scaled == 0 and rng.random() < 0.5)
+    )
 
     q_post_specific_likeability = rlikert_cont(
         rng,
@@ -178,18 +181,18 @@ def simulate_one(
     captcha_post_goal = 120
 
     # Primary hypothesis: post-task completions are driven by likeability,
-    # mentacy belief, and their interaction, with no meaningful engagement effect.
+    # mentism, and its interaction with liking, with no meaningful engagement effect.
     like_c = q_post_specific_likeability - 4.0
-    ment_c = q_post_specific_mentacy_belief_scale - np.mean([-6.0, 6.0])
-    like_x_ment = like_c * ment_c
+    mentism_c = q_post_specific_mentism - np.mean([-6.0, 6.0])
+    like_x_mentism = like_c * mentism_c
     fun_c = q_pre_captcha_fun - 2.3
     difficulty_c = q_pre_captcha_difficulty - 2.4
 
     post_log_mu = (
         outcome_intercept
         + beta_like * like_c
-        + beta_ment * ment_c
-        + beta_interaction * like_x_ment
+        + beta_ment * mentism_c
+        + beta_interaction * like_x_mentism
         + beta_fun * fun_c
         + beta_difficulty * difficulty_c
     )
@@ -242,7 +245,8 @@ def simulate_one(
         "q_post_gators_neg": float(q_post_gators_neg),
 
         "q_post_specific_total_time": float(q_post_specific_total_time),
-        "q_post_specific_mentacy_belief_scale": float(q_post_specific_mentacy_belief_scale),
+        "q_post_specific_mentism": float(q_post_specific_mentism),
+        "q_post_specific_robot_has_mind": q_post_specific_robot_has_mind,
         "q_post_specific_likeability": float(q_post_specific_likeability),
         "total_words": int(total_words),
         "mean_words_per_turn": float(mean_words_per_turn),
@@ -292,7 +296,7 @@ def main():
         "q_pre_idaq_total_time","q_pre_idaq",
         "q_pre_2050_total_time","q_pre_2050_mean_futurism_score",
         "q_post_gators_total_time","q_post_gators_pos","q_post_gators_neg",
-        "q_post_specific_total_time","q_post_specific_mentacy_belief_scale","q_post_specific_likeability",
+        "q_post_specific_total_time","q_post_specific_mentism","q_post_specific_robot_has_mind","q_post_specific_likeability",
         "total_words","mean_words_per_turn","word_rate_wps","mean_latency_sec",
     ]
     df = df[cols]
