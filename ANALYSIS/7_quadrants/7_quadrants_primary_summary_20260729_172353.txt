@@ -1,0 +1,72 @@
+Model-predicted liking x mentism cells
+dataset: primary
+data: C:/Users/SNL1/Desktop/repos/ALTRUISM/ANALYSIS/3_purified.csv
+rows used: 100
+model: captcha_post_completions ~ like_c * mentism_c
+negative-binomial parameterization: MASS::glm.nb (log link)
+liking mean: 5.63
+liking SD: 0.9811867
+mentism mean: -1.74
+mentism SD: 3.772896
+theta: 1.379058
+
+Model coefficients
+                    Estimate Std. Error   z value      Pr(>|z|)
+(Intercept)       2.86068381 0.09622276 29.729803 3.163984e-194
+like_c            0.23290919 0.10432753  2.232481  2.558321e-02
+mentism_c         0.04983571 0.02723482  1.829852  6.727201e-02
+like_c:mentism_c -0.06980978 0.02788978 -2.503060  1.231248e-02
+
+Predicted response-scale cells
+      like_c mentism_c        liking_level        mentism_level
+1 -0.9811867 -3.772896  Low liking (-1 SD)  Low mentism (-1 SD)
+2  0.9811867 -3.772896 High liking (+1 SD)  Low mentism (-1 SD)
+3 -0.9811867  3.772896  Low liking (-1 SD) High mentism (+1 SD)
+4  0.9811867  3.772896 High liking (+1 SD) High mentism (+1 SD)
+                                        cell liking_raw_value mentism_raw_value
+1   Low liking (-1 SD) / Low mentism (-1 SD)         4.648813         -5.512896
+2  High liking (+1 SD) / Low mentism (-1 SD)         6.611187         -5.512896
+3  Low liking (-1 SD) / High mentism (+1 SD)         4.648813          2.032896
+4 High liking (+1 SD) / High mentism (+1 SD)         6.611187          2.032896
+  predicted_completions response_se asymptotic_LCL asymptotic_UCL
+1              8.896888    1.435335       6.485057       12.20569
+2             23.561550    4.582917      16.093039       34.49607
+3             21.728207    6.030853      12.611464       37.43538
+4             20.466845    3.098689      15.211730       27.53742
+
+All pairwise rate-ratio contrasts (Holm-adjusted p-values)
+                                                                                contrast
+1   Low liking (-1 SD) / Low mentism (-1 SD) - High liking (+1 SD) / Low mentism (-1 SD)
+2   Low liking (-1 SD) / Low mentism (-1 SD) - Low liking (-1 SD) / High mentism (+1 SD)
+3  Low liking (-1 SD) / Low mentism (-1 SD) - High liking (+1 SD) / High mentism (+1 SD)
+4  High liking (+1 SD) / Low mentism (-1 SD) - Low liking (-1 SD) / High mentism (+1 SD)
+5 High liking (+1 SD) / Low mentism (-1 SD) - High liking (+1 SD) / High mentism (+1 SD)
+6 Low liking (-1 SD) / High mentism (+1 SD) - High liking (+1 SD) / High mentism (+1 SD)
+                                  numerator
+1  Low liking (-1 SD) / Low mentism (-1 SD)
+2  Low liking (-1 SD) / Low mentism (-1 SD)
+3  Low liking (-1 SD) / Low mentism (-1 SD)
+4 High liking (+1 SD) / Low mentism (-1 SD)
+5 High liking (+1 SD) / Low mentism (-1 SD)
+6 Low liking (-1 SD) / High mentism (+1 SD)
+                                 denominator log_rate_ratio        SE
+1  High liking (+1 SD) / Low mentism (-1 SD)    -0.97391461 0.2424741
+2  Low liking (-1 SD) / High mentism (+1 SD)    -0.89290976 0.3406340
+3 High liking (+1 SD) / High mentism (+1 SD)    -0.83310473 0.2194778
+4  Low liking (-1 SD) / High mentism (+1 SD)     0.08100485 0.3465909
+5 High liking (+1 SD) / High mentism (+1 SD)     0.14080989 0.2317608
+6 High liking (+1 SD) / High mentism (+1 SD)     0.05980503 0.3321324
+     z_ratio      p_value rate_ratio asymptotic_LCL asymptotic_UCL p_value_holm
+1 -4.0165721 5.905081e-05  0.3776020      0.2347686      0.6073354 0.0003543049
+2 -2.6213170 8.759079e-03  0.4094626      0.2100226      0.7982932 0.0350363144
+3 -3.7958504 1.471382e-04  0.4346976      0.2827271      0.6683547 0.0007356911
+4  0.2337189 8.152032e-01  1.0843762      0.5497449      2.1389404 1.0000000000
+5  0.6075657 5.434756e-01  1.1512058      0.7309334      1.8131264 1.0000000000
+6  0.1800638 8.571025e-01  1.0616295      0.5536832      2.0355634 1.0000000000
+  holm_significant_05
+1                TRUE
+2                TRUE
+3                TRUE
+4               FALSE
+5               FALSE
+6               FALSE
