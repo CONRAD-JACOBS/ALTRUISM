@@ -1,0 +1,58 @@
+DFBETAS / leave-one-out purification
+input: C:\Users\SNL1\Desktop\repos\ALTRUISM\ANALYSIS\2_simplified.csv
+output: C:\Users\SNL1\Desktop\repos\ALTRUISM\ANALYSIS\3_purified.csv
+rows_in_input: 102
+rows_after_custom_exclusions: 100
+rows_used_for_dfbetas_model: 100
+rows_in_purified_output: 100
+dfbetas_sensitivity_output: C:\Users\SNL1\Desktop\repos\ALTRUISM\ANALYSIS\3_dfbetas_sensitivity.csv
+rows_in_dfbetas_sensitivity_output: 97
+formula: captcha_post_completions ~ like_c + mentism_c + like_x_mentism
+centering_likeability_mean: 5.63
+centering_mentism_mean: -1.74
+thresholds: {'LIKING': 0.5, 'MENTISM': 0.5, 'LIKINGxMENTISM': 0.5}
+dfbetas_contributes_to_exclusions: False
+cooks_distance_threshold: 0.04
+cooks_distance_terms: Intercept, like_c, mentism_c, like_x_mentism
+custom_excluded_participants: [34, 98]
+excluded_participant_count: 2
+
+dfbetas_sensitivity_excluded_participant_count: 3
+DFBETAS sensitivity excluded participants
+                         exp_sid  participant_number  dfbetas_exclude_flag  custom_exclude_flag    exclusion_reason
+b09679120fe74756b97eb9314a75dec4                  76                  True                False dfbetas_sensitivity
+cc291a6ebaf34cdb8741a0b0fc736589                  78                  True                False dfbetas_sensitivity
+07dd2d8b11c14d899c947ce60d0acebf                 101                  True                False dfbetas_sensitivity
+
+Full model coefficients
+Intercept         2.860686
+like_c            0.232917
+mentism_c         0.049835
+like_x_mentism   -0.069809
+alpha             0.725127
+
+Excluded participants
+                         exp_sid  participant_number  dfbetas_exclude_flag  custom_exclude_flag exclusion_reason
+17341d7a428142d89bf00c2b7dbcbcff                  34                 False                 True           custom
+51fdf791ec3446e99d9b0ed31790ea8e                  98                 False                 True           custom
+
+Cook's Distance comparison
+Cook's Distance is diagnostic only here; it does not affect 3_purified.csv.
+Cook-targeted participant count: 8
+Cook-targeted participants
+                         exp_sid  participant_number  cooks_distance  max_abs_dfbetas  exclude_flag
+d14543fe53d641f3af028e703af3092c                  51        0.245235         0.462860         False
+5ff4662ff28f41589cdcda6c6aa93568                  53        0.113835         0.411353         False
+f582a4098ccc4e26a3e07ae72b71605f                  56        0.051524         0.303303         False
+b09679120fe74756b97eb9314a75dec4                  76        1.217103         1.506855         False
+cc291a6ebaf34cdb8741a0b0fc736589                  78        1.017809         1.574329         False
+a0f2fb5dabb146c2830289f564f52723                  93        0.087553         0.283158         False
+07dd2d8b11c14d899c947ce60d0acebf                 101        0.126932         0.501042         False
+54c0bc6aeb364c928a0a270057f5bdbb                 103        0.113258         0.314933         False
+
+DFBETAS vs Cook targeting counts
+targeted_by
+both             3
+dfbetas_only     0
+cooks_only       5
+neither         92

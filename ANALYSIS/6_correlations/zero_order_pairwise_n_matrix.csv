@@ -1,6 +1,8 @@
-,mentism,GAToRS_negative,GAToRS_positive,liking,empathy
-mentism,100,100,100,100,100
-GAToRS_negative,100,100,100,100,100
-GAToRS_positive,100,100,100,100,100
-liking,100,100,100,100,100
-empathy,100,100,100,100,100
+,Robomentism,Likeability,IDAQ,GAToRS positive,GAToRS negative,reCATPCHA Fun,reCAPTCHA Difficulty
+Robomentism,100,100,100,100,100,100,100
+Likeability,100,100,100,100,100,100,100
+IDAQ,100,100,100,100,100,100,100
+GAToRS positive,100,100,100,100,100,100,100
+GAToRS negative,100,100,100,100,100,100,100
+reCATPCHA Fun,100,100,100,100,100,100,100
+reCAPTCHA Difficulty,100,100,100,100,100,100,100

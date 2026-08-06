@@ -57,9 +57,10 @@ def _irr_table(result):
             "IRR": np.exp(p),
             "CI_low_IRR": np.exp(ci[0]),
             "CI_high_IRR": np.exp(ci[1]),
-            "p_value": result.pvalues,
+            "p_value": result.pvalues.loc[p.index],
         }
     )
+    out.index.name = "term"
     return out
 
 
@@ -562,6 +563,7 @@ def run_nb_model_suite(csv_path, out_dir=None, dataset_label="primary"):
     dat["like_x_mentism"] = dat["like_c"] * dat["mentism_c"]
 
     formulas = {
+        "intercept_only": "{} ~ 1".format(OUTCOME),
         "theory_primary_only": "{} ~ like_c + mentism_c + like_x_mentism".format(OUTCOME),
         "theory_plus_exploratory": (
             "{} ~ like_c + mentism_c + like_x_mentism + q_post_gators_pos + q_post_gators_neg + q_pre_idaq".format(OUTCOME)
@@ -613,6 +615,11 @@ def run_nb_model_suite(csv_path, out_dir=None, dataset_label="primary"):
     model_cmp = pd.DataFrame(model_rows).sort_values("AIC", na_position="last").reset_index(drop=True)
 
     lr_rows = []
+    if "intercept_only" in fits and "theory_primary_only" in fits:
+        d = _lr_compare(fits["intercept_only"], fits["theory_primary_only"])
+        d["dataset"] = dataset_label
+        d["comparison"] = "intercept_only -> theory_primary_only"
+        lr_rows.append(d)
     if "theory_primary_only" in fits and "theory_plus_exploratory" in fits:
         d = _lr_compare(fits["theory_primary_only"], fits["theory_plus_exploratory"])
         d["dataset"] = dataset_label
@@ -634,7 +641,7 @@ def run_nb_model_suite(csv_path, out_dir=None, dataset_label="primary"):
         t = _irr_table(r)
         t.insert(0, "dataset", dataset_label)
         p = os.path.join(out_dir, "5_nb_model_{}_irr_{}_{}.csv".format(dataset_label, name, stamp))
-        t.to_csv(p)
+        t.reset_index().to_csv(p, index=False)
         irr_paths.append(p)
 
     plot_paths = []

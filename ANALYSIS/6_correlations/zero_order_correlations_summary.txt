@@ -1,19 +1,21 @@
 Zero-order Pearson correlations
-input: /Users/neurorobots/Desktop/repos/ALTRUISM/ANALYSIS/3_purified.csv
+input: C:\Users\SNL1\Desktop\repos\ALTRUISM\ANALYSIS\3_purified.csv
 rows_in_input: 100
-variables:
-- mentism: q_post_specific_mentism
-- GAToRS_negative: q_post_gators_neg
-- GAToRS_positive: q_post_gators_pos
-- liking: q_post_specific_likeability
-- empathy: q_post_specific_robot_empathy
+variables (raw column -> display heading):
+- q_post_specific_mentism -> Robomentism
+- q_post_specific_likeability -> Likeability
+- q_pre_idaq -> IDAQ
+- q_post_gators_pos -> GAToRS positive
+- q_post_gators_neg -> GAToRS negative
+- q_pre_captcha_fun -> reCATPCHA Fun
+- q_pre_captcha_difficulty -> reCAPTCHA Difficulty
 
-Requested correlations
-              x               y                    x_column                      y_column  method  n_pairwise         r      p_value  ci95_low  ci95_high
-        mentism GAToRS_negative     q_post_specific_mentism             q_post_gators_neg pearson         100 -0.121572 2.282384e-01 -0.310574   0.076677
-        mentism GAToRS_positive     q_post_specific_mentism             q_post_gators_pos pearson         100  0.214790 3.187192e-02  0.019181   0.394562
-        mentism          liking     q_post_specific_mentism   q_post_specific_likeability pearson         100  0.375509 1.182378e-04  0.193351   0.532641
-        mentism         empathy     q_post_specific_mentism q_post_specific_robot_empathy pearson         100  0.387346 6.852381e-05  0.206651   0.542491
-GAToRS_negative          liking           q_post_gators_neg   q_post_specific_likeability pearson         100 -0.194171 5.289645e-02 -0.376240   0.002336
-GAToRS_positive          liking           q_post_gators_pos   q_post_specific_likeability pearson         100  0.293607 3.028832e-03  0.103137   0.463307
-         liking         empathy q_post_specific_likeability q_post_specific_robot_empathy pearson         100  0.621575 5.164399e-12  0.484282   0.728991
+Lower-triangle publication table
+               Variable      1     2    3      4    5    6 7
+         1. Robomentism      —                              
+         2. Likeability .38***     —                        
+                3. IDAQ .37***   .17    —                   
+     4. GAToRS positive   .21* .29**  .06      —            
+     5. GAToRS negative   -.12  -.19 -.02 -.29**    —       
+       6. reCATPCHA Fun  .28**   .16  .02    .03 -.11    —  
+7. reCAPTCHA Difficulty   -.02  -.14  .02   -.05  .06 -.01 —
