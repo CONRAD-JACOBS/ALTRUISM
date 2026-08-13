@@ -1,0 +1,46 @@
+Primary NB diagnostics
+model formula: captcha_post_completions ~ like_c + mentism_c + like_x_mentism
+rows used: 98
+AIC: 721.156084
+BIC: 734.080922
+log likelihood: -355.578042
+alpha estimate: 0.588404
+mean observed count: 15.520408
+mean predicted count: 15.056258
+Pearson residual mean: 0.002542
+Pearson residual SD: 1.077661
+quadrant split: 0 on mean-centered like_c and mentism_c
+
+Coefficient table
+                   Coef.  Std.Err.          z          P>|z|    [0.025    0.975]
+Intercept       2.743583  0.088477  31.009051  4.070277e-211  2.570172  2.916995
+like_c          0.239814  0.092682   2.587486   9.667923e-03  0.058160  0.421467
+mentism_c       0.006126  0.025235   0.242747   8.082015e-01 -0.043333  0.055585
+like_x_mentism -0.072638  0.025447  -2.854535   4.309992e-03 -0.122513 -0.022764
+alpha           0.588404  0.091075   6.460684   1.042307e-10  0.409901  0.766907
+
+Top 10 participants by absolute Pearson residual
+ participant_id  observed_count  predicted_count  raw_residual  pearson_residual  deviance_residual  liking  mentism  interaction                     quadrant
+            101           108.0        24.077938     83.922062          4.391459           2.537107     7.0     -3.0    -1.574344     high_liking__low_mentism
+             51           115.0        31.916040     83.083960          3.306776           2.080338     7.0     -6.0    -5.706997     high_liking__low_mentism
+             93            25.0         7.133866     17.866134          2.934046           1.906843     4.0     -5.0     5.099125    lower_liking__low_mentism
+             56            26.0         8.075471     17.924529          2.630074           1.760346     4.0     -4.0     3.476676    lower_liking__low_mentism
+            103            90.0        31.916040     58.083960          2.311766           1.600024     7.0     -6.0    -5.706997     high_liking__low_mentism
+             43            43.0        15.502412     27.497588          2.195173           1.538429     5.0      1.0    -1.778426 lower_liking__higher_mentism
+             75            40.0        14.703334     25.296666          2.123528           1.500081     6.0      5.0     2.588921  high_liking__higher_mentism
+             28            30.0        11.356557     18.643443          1.995992           1.430432     7.0      5.0     9.446064  high_liking__higher_mentism
+             53            10.0         3.669778      6.330222          1.859101           1.350821     3.0     -6.0    10.864431    lower_liking__low_mentism
+              4            67.0        29.054435     37.945565          1.654881           1.236536     7.0     -5.0    -4.329446     high_liking__low_mentism
+
+Top 10 participants by absolute raw residual
+ participant_id  observed_count  predicted_count  raw_residual  pearson_residual  deviance_residual  liking  mentism  interaction                     quadrant
+            101           108.0        24.077938     83.922062          4.391459           2.537107     7.0     -3.0    -1.574344     high_liking__low_mentism
+             51           115.0        31.916040     83.083960          3.306776           2.080338     7.0     -6.0    -5.706997     high_liking__low_mentism
+            103            90.0        31.916040     58.083960          2.311766           1.600024     7.0     -6.0    -5.706997     high_liking__low_mentism
+              4            67.0        29.054435     37.945565          1.654881           1.236536     7.0     -5.0    -4.329446     high_liking__low_mentism
+             43            43.0        15.502412     27.497588          2.195173           1.538429     5.0      1.0    -1.778426 lower_liking__higher_mentism
+             75            40.0        14.703334     25.296666          2.123528           1.500081     6.0      5.0     2.588921  high_liking__higher_mentism
+             96            37.0        17.810107     19.189893          1.342076           1.045535     6.0     -4.0    -0.809038     high_liking__low_mentism
+              7            10.0        29.054435    -19.054435         -0.831001          -1.132591     7.0     -5.0    -4.329446     high_liking__low_mentism
+             28            30.0        11.356557     18.643443          1.995992           1.430432     7.0      5.0     9.446064  high_liking__higher_mentism
+             56            26.0         8.075471     17.924529          2.630074           1.760346     4.0     -4.0     3.476676    lower_liking__low_mentism
