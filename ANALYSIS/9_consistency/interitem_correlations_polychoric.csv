@@ -1,0 +1,297 @@
+measure,item1,item2,r,n_pair,status
+Fun,general_captcha_liking,captcha_task_fun,0.703382618916126,100,ok (22/49 empty cells)
+Fun,general_captcha_liking,captcha_task_enjoyment,0.6981744621518021,100,ok (22/49 empty cells)
+Fun,captcha_task_fun,captcha_task_enjoyment,0.7835285494812121,100,ok (23/49 empty cells)
+Fun,general_captcha_liking,general_captcha_liking,1.0,100,diagonal
+Fun,captcha_task_fun,captcha_task_fun,1.0,100,diagonal
+Fun,captcha_task_enjoyment,captcha_task_enjoyment,1.0,100,diagonal
+IDAQ,idaq_3,idaq_4,0.14748818169465808,100,ok (52/100 empty cells)
+IDAQ,idaq_3,idaq_7,0.42248602319234685,100,ok (47/80 empty cells)
+IDAQ,idaq_3,idaq_9,0.3579407078285253,100,ok (52/80 empty cells)
+IDAQ,idaq_3,idaq_11,0.4490606928617048,100,ok (39/80 empty cells)
+IDAQ,idaq_3,idaq_12,-0.08787282490922484,100,ok (46/90 empty cells)
+IDAQ,idaq_3,idaq_13,0.693946536288159,100,ok (53/80 empty cells)
+IDAQ,idaq_3,idaq_14,0.33402794364960714,100,ok (55/100 empty cells)
+IDAQ,idaq_3,idaq_17,0.5750545178973678,100,ok (48/90 empty cells)
+IDAQ,idaq_3,idaq_20,-0.0017507346848602498,100,ok (47/90 empty cells)
+IDAQ,idaq_3,idaq_21,0.36859993697047083,100,ok (54/100 empty cells)
+IDAQ,idaq_3,idaq_22,0.2481011425991964,100,ok (61/100 empty cells)
+IDAQ,idaq_3,idaq_23,0.1839416587493621,100,ok (51/100 empty cells)
+IDAQ,idaq_3,idaq_26,0.47582004792191596,100,ok (54/100 empty cells)
+IDAQ,idaq_3,idaq_29,0.07780989053889203,100,ok (55/100 empty cells)
+IDAQ,idaq_4,idaq_7,0.19922772569722857,100,ok (43/80 empty cells)
+IDAQ,idaq_4,idaq_9,-0.03833865017284295,100,ok (52/80 empty cells)
+IDAQ,idaq_4,idaq_11,0.11943434904430388,100,ok (36/80 empty cells)
+IDAQ,idaq_4,idaq_12,0.44624590222748595,100,ok (41/90 empty cells)
+IDAQ,idaq_4,idaq_13,0.3163624203241985,100,ok (54/80 empty cells)
+IDAQ,idaq_4,idaq_14,0.20407428430667165,100,ok (56/100 empty cells)
+IDAQ,idaq_4,idaq_17,0.06878190584033067,100,ok (45/90 empty cells)
+IDAQ,idaq_4,idaq_20,0.4990830729387053,100,ok (41/90 empty cells)
+IDAQ,idaq_4,idaq_21,0.21501970472607287,100,ok (43/100 empty cells)
+IDAQ,idaq_4,idaq_22,0.575336260066528,100,ok (48/100 empty cells)
+IDAQ,idaq_4,idaq_23,0.1996753858463191,100,ok (47/100 empty cells)
+IDAQ,idaq_4,idaq_26,0.21395434684749498,100,ok (57/100 empty cells)
+IDAQ,idaq_4,idaq_29,0.4643431721522213,100,ok (51/100 empty cells)
+IDAQ,idaq_7,idaq_9,0.47819897990522137,100,ok (38/64 empty cells)
+IDAQ,idaq_7,idaq_11,0.25264743212899005,100,ok (29/64 empty cells)
+IDAQ,idaq_7,idaq_12,0.02253627687325304,100,ok (40/72 empty cells)
+IDAQ,idaq_7,idaq_13,0.5708056339611951,100,ok (41/64 empty cells)
+IDAQ,idaq_7,idaq_14,0.5289066048690333,100,ok (43/80 empty cells)
+IDAQ,idaq_7,idaq_17,0.22240939388110767,100,ok (38/72 empty cells)
+IDAQ,idaq_7,idaq_20,0.20426271046046196,100,ok (42/72 empty cells)
+IDAQ,idaq_7,idaq_21,0.4583771967278966,100,ok (42/80 empty cells)
+IDAQ,idaq_7,idaq_22,0.27184558692529626,100,ok (43/80 empty cells)
+IDAQ,idaq_7,idaq_23,0.40952827037878564,100,ok (42/80 empty cells)
+IDAQ,idaq_7,idaq_26,0.6221960397319021,100,ok (50/80 empty cells)
+IDAQ,idaq_7,idaq_29,0.0451872548402205,100,ok (46/80 empty cells)
+IDAQ,idaq_9,idaq_11,0.16361206928292082,100,ok (40/64 empty cells)
+IDAQ,idaq_9,idaq_12,-0.03557800910161753,100,ok (45/72 empty cells)
+IDAQ,idaq_9,idaq_13,0.3234547455319588,100,ok (42/64 empty cells)
+IDAQ,idaq_9,idaq_14,0.3801131233204969,100,ok (54/80 empty cells)
+IDAQ,idaq_9,idaq_17,0.5524037539928113,100,ok (46/72 empty cells)
+IDAQ,idaq_9,idaq_20,0.12398628267031307,100,ok (49/72 empty cells)
+IDAQ,idaq_9,idaq_21,0.4462063920481394,100,ok (48/80 empty cells)
+IDAQ,idaq_9,idaq_22,0.23892177096923803,100,ok (51/80 empty cells)
+IDAQ,idaq_9,idaq_23,0.34064279316625623,100,ok (51/80 empty cells)
+IDAQ,idaq_9,idaq_26,0.5421106066526459,100,ok (54/80 empty cells)
+IDAQ,idaq_9,idaq_29,0.10709496630544313,100,ok (53/80 empty cells)
+IDAQ,idaq_11,idaq_12,-0.06761497376718845,100,ok (27/72 empty cells)
+IDAQ,idaq_11,idaq_13,0.43674608851980484,100,ok (41/64 empty cells)
+IDAQ,idaq_11,idaq_14,0.23625143120067188,100,ok (40/80 empty cells)
+IDAQ,idaq_11,idaq_17,0.47508828556206006,100,ok (33/72 empty cells)
+IDAQ,idaq_11,idaq_20,0.02194440869510138,100,ok (30/72 empty cells)
+IDAQ,idaq_11,idaq_21,0.24121911235233892,100,ok (37/80 empty cells)
+IDAQ,idaq_11,idaq_22,0.15257675460136777,100,ok (36/80 empty cells)
+IDAQ,idaq_11,idaq_23,0.27409143781607337,100,ok (37/80 empty cells)
+IDAQ,idaq_11,idaq_26,0.4209465176009345,100,ok (41/80 empty cells)
+IDAQ,idaq_11,idaq_29,0.1026123895412409,100,ok (37/80 empty cells)
+IDAQ,idaq_12,idaq_13,0.010989331560168188,100,ok (46/72 empty cells)
+IDAQ,idaq_12,idaq_14,0.04621327842057528,100,ok (46/90 empty cells)
+IDAQ,idaq_12,idaq_17,-0.164135517583991,100,ok (41/81 empty cells)
+IDAQ,idaq_12,idaq_20,0.37798479983107536,100,ok (39/81 empty cells)
+IDAQ,idaq_12,idaq_21,0.07010034954805393,100,ok (45/90 empty cells)
+IDAQ,idaq_12,idaq_22,0.5246091857470901,100,ok (41/90 empty cells)
+IDAQ,idaq_12,idaq_23,0.18433838124333085,100,ok (44/90 empty cells)
+IDAQ,idaq_12,idaq_26,-0.016493402389586957,100,ok (53/90 empty cells)
+IDAQ,idaq_12,idaq_29,0.46488620969552263,100,ok (46/90 empty cells)
+IDAQ,idaq_13,idaq_14,0.36715392326848445,100,ok (52/80 empty cells)
+IDAQ,idaq_13,idaq_17,0.5073608033013701,100,ok (47/72 empty cells)
+IDAQ,idaq_13,idaq_20,0.0625285031470719,100,ok (45/72 empty cells)
+IDAQ,idaq_13,idaq_21,0.33546726222531337,100,ok (51/80 empty cells)
+IDAQ,idaq_13,idaq_22,0.16608284242863341,100,ok (50/80 empty cells)
+IDAQ,idaq_13,idaq_23,0.21771176584452875,100,ok (50/80 empty cells)
+IDAQ,idaq_13,idaq_26,0.4647594818742316,100,ok (51/80 empty cells)
+IDAQ,idaq_13,idaq_29,0.04759430914677662,100,ok (52/80 empty cells)
+IDAQ,idaq_14,idaq_17,0.36825556675732246,100,ok (53/90 empty cells)
+IDAQ,idaq_14,idaq_20,0.2514486744801417,100,ok (51/90 empty cells)
+IDAQ,idaq_14,idaq_21,0.7305268207678643,100,ok (58/100 empty cells)
+IDAQ,idaq_14,idaq_22,0.1793151448792761,100,ok (55/100 empty cells)
+IDAQ,idaq_14,idaq_23,0.5582463716294733,100,ok (53/100 empty cells)
+IDAQ,idaq_14,idaq_26,0.6620189214315251,100,ok (62/100 empty cells)
+IDAQ,idaq_14,idaq_29,-0.08263544530695498,100,ok (58/100 empty cells)
+IDAQ,idaq_17,idaq_20,0.11681432726413916,100,ok (40/81 empty cells)
+IDAQ,idaq_17,idaq_21,0.4025861430056734,100,ok (46/90 empty cells)
+IDAQ,idaq_17,idaq_22,0.070805923481517,100,ok (43/90 empty cells)
+IDAQ,idaq_17,idaq_23,0.2545787825322464,100,ok (46/90 empty cells)
+IDAQ,idaq_17,idaq_26,0.43577944034061344,100,ok (51/90 empty cells)
+IDAQ,idaq_17,idaq_29,-0.128377660356209,100,ok (46/90 empty cells)
+IDAQ,idaq_20,idaq_21,0.250784076747258,100,ok (45/90 empty cells)
+IDAQ,idaq_20,idaq_22,0.5206988382173925,100,ok (45/90 empty cells)
+IDAQ,idaq_20,idaq_23,0.2264476434922486,100,ok (46/90 empty cells)
+IDAQ,idaq_20,idaq_26,0.15024561681499526,100,ok (50/90 empty cells)
+IDAQ,idaq_20,idaq_29,0.4597115058630121,100,ok (46/90 empty cells)
+IDAQ,idaq_21,idaq_22,0.2961157376999157,100,ok (50/100 empty cells)
+IDAQ,idaq_21,idaq_23,0.48730517639113247,100,ok (54/100 empty cells)
+IDAQ,idaq_21,idaq_26,0.6061807169802598,100,ok (58/100 empty cells)
+IDAQ,idaq_21,idaq_29,0.004798506213530956,100,ok (49/100 empty cells)
+IDAQ,idaq_22,idaq_23,0.21681712229546726,100,ok (49/100 empty cells)
+IDAQ,idaq_22,idaq_26,0.3737143003722481,100,ok (57/100 empty cells)
+IDAQ,idaq_22,idaq_29,0.6993481837313817,100,ok (51/100 empty cells)
+IDAQ,idaq_23,idaq_26,0.45044146780079064,100,ok (57/100 empty cells)
+IDAQ,idaq_23,idaq_29,0.013632484133011531,100,ok (48/100 empty cells)
+IDAQ,idaq_26,idaq_29,0.08676016106018877,100,ok (56/100 empty cells)
+IDAQ,idaq_3,idaq_3,1.0,100,diagonal
+IDAQ,idaq_4,idaq_4,1.0,100,diagonal
+IDAQ,idaq_7,idaq_7,1.0,100,diagonal
+IDAQ,idaq_9,idaq_9,1.0,100,diagonal
+IDAQ,idaq_11,idaq_11,1.0,100,diagonal
+IDAQ,idaq_12,idaq_12,1.0,100,diagonal
+IDAQ,idaq_13,idaq_13,1.0,100,diagonal
+IDAQ,idaq_14,idaq_14,1.0,100,diagonal
+IDAQ,idaq_17,idaq_17,1.0,100,diagonal
+IDAQ,idaq_20,idaq_20,1.0,100,diagonal
+IDAQ,idaq_21,idaq_21,1.0,100,diagonal
+IDAQ,idaq_22,idaq_22,1.0,100,diagonal
+IDAQ,idaq_23,idaq_23,1.0,100,diagonal
+IDAQ,idaq_26,idaq_26,1.0,100,diagonal
+IDAQ,idaq_29,idaq_29,1.0,100,diagonal
+GAToRS Personal Positive (S1),gators_1,gators_2,0.3595751933492192,100,ok (17/49 empty cells)
+GAToRS Personal Positive (S1),gators_1,gators_3,0.39708625824599353,100,ok (20/49 empty cells)
+GAToRS Personal Positive (S1),gators_1,gators_4,0.20466828789954267,100,ok (11/42 empty cells)
+GAToRS Personal Positive (S1),gators_1,gators_5,0.28091906548939444,100,ok (16/49 empty cells)
+GAToRS Personal Positive (S1),gators_2,gators_3,0.16232671549263636,100,ok (15/49 empty cells)
+GAToRS Personal Positive (S1),gators_2,gators_4,0.09833673300980285,100,ok (9/42 empty cells)
+GAToRS Personal Positive (S1),gators_2,gators_5,0.04222954150481317,100,ok (14/49 empty cells)
+GAToRS Personal Positive (S1),gators_3,gators_4,0.5111531849961927,100,ok (16/42 empty cells)
+GAToRS Personal Positive (S1),gators_3,gators_5,0.28180097547233846,100,ok (20/49 empty cells)
+GAToRS Personal Positive (S1),gators_4,gators_5,0.3433341921190719,100,ok (11/42 empty cells)
+GAToRS Personal Positive (S1),gators_1,gators_1,1.0,100,diagonal
+GAToRS Personal Positive (S1),gators_2,gators_2,1.0,100,diagonal
+GAToRS Personal Positive (S1),gators_3,gators_3,1.0,100,diagonal
+GAToRS Personal Positive (S1),gators_4,gators_4,1.0,100,diagonal
+GAToRS Personal Positive (S1),gators_5,gators_5,1.0,100,diagonal
+GAToRS Personal Negative (S2),gators_6,gators_7,0.21160715318611048,100,ok (10/42 empty cells)
+GAToRS Personal Negative (S2),gators_6,gators_8,0.41847686139219303,100,ok (11/42 empty cells)
+GAToRS Personal Negative (S2),gators_6,gators_9,0.5039119203837767,100,ok (7/36 empty cells)
+GAToRS Personal Negative (S2),gators_6,gators_10,0.3926482229696697,100,ok (6/42 empty cells)
+GAToRS Personal Negative (S2),gators_7,gators_8,0.4685351431004165,100,ok (18/49 empty cells)
+GAToRS Personal Negative (S2),gators_7,gators_9,0.4461664333965699,100,ok (11/42 empty cells)
+GAToRS Personal Negative (S2),gators_7,gators_10,0.28882976890661116,100,ok (13/49 empty cells)
+GAToRS Personal Negative (S2),gators_8,gators_9,0.7243888326115441,100,ok (16/42 empty cells)
+GAToRS Personal Negative (S2),gators_8,gators_10,0.444878776771301,100,ok (17/49 empty cells)
+GAToRS Personal Negative (S2),gators_9,gators_10,0.3929149202174021,100,ok (11/42 empty cells)
+GAToRS Personal Negative (S2),gators_6,gators_6,1.0,100,diagonal
+GAToRS Personal Negative (S2),gators_7,gators_7,1.0,100,diagonal
+GAToRS Personal Negative (S2),gators_8,gators_8,1.0,100,diagonal
+GAToRS Personal Negative (S2),gators_9,gators_9,1.0,100,diagonal
+GAToRS Personal Negative (S2),gators_10,gators_10,1.0,100,diagonal
+GAToRS Societal Positive (S3),gators_11,gators_12,0.6288038507815773,100,ok (15/35 empty cells)
+GAToRS Societal Positive (S3),gators_11,gators_13,0.45320960647141334,100,ok (25/49 empty cells)
+GAToRS Societal Positive (S3),gators_11,gators_14,0.5081055048001785,100,ok (20/49 empty cells)
+GAToRS Societal Positive (S3),gators_11,gators_15,0.4388508357782855,100,ok (17/42 empty cells)
+GAToRS Societal Positive (S3),gators_12,gators_13,0.44559682557708175,100,ok (14/35 empty cells)
+GAToRS Societal Positive (S3),gators_12,gators_14,0.26759884954465024,100,ok (10/35 empty cells)
+GAToRS Societal Positive (S3),gators_12,gators_15,0.5457864864542872,100,ok (11/30 empty cells)
+GAToRS Societal Positive (S3),gators_13,gators_14,0.4612295335575219,100,ok (22/49 empty cells)
+GAToRS Societal Positive (S3),gators_13,gators_15,0.4639390639242503,100,ok (20/42 empty cells)
+GAToRS Societal Positive (S3),gators_14,gators_15,0.14151372529866618,100,ok (13/42 empty cells)
+GAToRS Societal Positive (S3),gators_11,gators_11,1.0,100,diagonal
+GAToRS Societal Positive (S3),gators_12,gators_12,1.0,100,diagonal
+GAToRS Societal Positive (S3),gators_13,gators_13,1.0,100,diagonal
+GAToRS Societal Positive (S3),gators_14,gators_14,1.0,100,diagonal
+GAToRS Societal Positive (S3),gators_15,gators_15,1.0,100,diagonal
+GAToRS Societal Negative (S4),gators_16,gators_17,0.363015215258575,100,ok (14/42 empty cells)
+GAToRS Societal Negative (S4),gators_16,gators_18,0.35366298019827985,100,ok (18/49 empty cells)
+GAToRS Societal Negative (S4),gators_16,gators_19,0.21073689980423643,100,ok (12/35 empty cells)
+GAToRS Societal Negative (S4),gators_16,gators_20,0.15593942752325643,100,ok (10/35 empty cells)
+GAToRS Societal Negative (S4),gators_17,gators_18,0.3604116283458491,100,ok (14/42 empty cells)
+GAToRS Societal Negative (S4),gators_17,gators_19,0.26037665764776574,100,ok (9/30 empty cells)
+GAToRS Societal Negative (S4),gators_17,gators_20,0.240414883499685,100,ok (9/30 empty cells)
+GAToRS Societal Negative (S4),gators_18,gators_19,0.25812353044983444,100,ok (11/35 empty cells)
+GAToRS Societal Negative (S4),gators_18,gators_20,0.09657220290879873,100,ok (9/35 empty cells)
+GAToRS Societal Negative (S4),gators_19,gators_20,0.5113143126798071,100,ok (9/25 empty cells)
+GAToRS Societal Negative (S4),gators_16,gators_16,1.0,100,diagonal
+GAToRS Societal Negative (S4),gators_17,gators_17,1.0,100,diagonal
+GAToRS Societal Negative (S4),gators_18,gators_18,1.0,100,diagonal
+GAToRS Societal Negative (S4),gators_19,gators_19,1.0,100,diagonal
+GAToRS Societal Negative (S4),gators_20,gators_20,1.0,100,diagonal
+GAToRS Positive,gators_1,gators_2,0.3595751933492192,100,ok (17/49 empty cells)
+GAToRS Positive,gators_1,gators_3,0.39708625824599353,100,ok (20/49 empty cells)
+GAToRS Positive,gators_1,gators_4,0.20466828789954267,100,ok (11/42 empty cells)
+GAToRS Positive,gators_1,gators_5,0.28091906548939444,100,ok (16/49 empty cells)
+GAToRS Positive,gators_1,gators_11,-0.0529505191620611,100,ok (15/49 empty cells)
+GAToRS Positive,gators_1,gators_12,0.12120729665590022,100,ok (9/35 empty cells)
+GAToRS Positive,gators_1,gators_13,0.3290804373819888,100,ok (23/49 empty cells)
+GAToRS Positive,gators_1,gators_14,-0.13603500948190347,100,ok (15/49 empty cells)
+GAToRS Positive,gators_1,gators_15,0.4232981012877666,100,ok (19/42 empty cells)
+GAToRS Positive,gators_2,gators_3,0.16232671549263636,100,ok (15/49 empty cells)
+GAToRS Positive,gators_2,gators_4,0.09833673300980285,100,ok (9/42 empty cells)
+GAToRS Positive,gators_2,gators_5,0.04222954150481317,100,ok (14/49 empty cells)
+GAToRS Positive,gators_2,gators_11,0.03912989200727073,100,ok (16/49 empty cells)
+GAToRS Positive,gators_2,gators_12,-0.040248210192376836,100,ok (8/35 empty cells)
+GAToRS Positive,gators_2,gators_13,0.1591130936692567,100,ok (19/49 empty cells)
+GAToRS Positive,gators_2,gators_14,0.17899722277375313,100,ok (12/49 empty cells)
+GAToRS Positive,gators_2,gators_15,0.09285386708110682,100,ok (13/42 empty cells)
+GAToRS Positive,gators_3,gators_4,0.5111531849961927,100,ok (16/42 empty cells)
+GAToRS Positive,gators_3,gators_5,0.28180097547233846,100,ok (20/49 empty cells)
+GAToRS Positive,gators_3,gators_11,0.19247602306063916,100,ok (19/49 empty cells)
+GAToRS Positive,gators_3,gators_12,0.2524932403966658,100,ok (9/35 empty cells)
+GAToRS Positive,gators_3,gators_13,0.31947879331311735,100,ok (23/49 empty cells)
+GAToRS Positive,gators_3,gators_14,0.08837313807777968,100,ok (19/49 empty cells)
+GAToRS Positive,gators_3,gators_15,0.3602189109832504,100,ok (15/42 empty cells)
+GAToRS Positive,gators_4,gators_5,0.3433341921190719,100,ok (11/42 empty cells)
+GAToRS Positive,gators_4,gators_11,0.17581442366571054,100,ok (13/42 empty cells)
+GAToRS Positive,gators_4,gators_12,0.18466314430940206,100,ok (7/30 empty cells)
+GAToRS Positive,gators_4,gators_13,0.1355262412353544,100,ok (18/42 empty cells)
+GAToRS Positive,gators_4,gators_14,0.04871911162610831,100,ok (13/42 empty cells)
+GAToRS Positive,gators_4,gators_15,0.2649307042737413,100,ok (12/36 empty cells)
+GAToRS Positive,gators_5,gators_11,0.04994657504766764,100,ok (19/49 empty cells)
+GAToRS Positive,gators_5,gators_12,0.23811718397178278,100,ok (7/35 empty cells)
+GAToRS Positive,gators_5,gators_13,0.020624456415388452,100,ok (17/49 empty cells)
+GAToRS Positive,gators_5,gators_14,-0.2492070857270364,100,ok (20/49 empty cells)
+GAToRS Positive,gators_5,gators_15,0.30990881954112337,100,ok (15/42 empty cells)
+GAToRS Positive,gators_11,gators_12,0.6288038507815773,100,ok (15/35 empty cells)
+GAToRS Positive,gators_11,gators_13,0.45320960647141334,100,ok (25/49 empty cells)
+GAToRS Positive,gators_11,gators_14,0.5081055048001785,100,ok (20/49 empty cells)
+GAToRS Positive,gators_11,gators_15,0.4388508357782855,100,ok (17/42 empty cells)
+GAToRS Positive,gators_12,gators_13,0.44559682557708175,100,ok (14/35 empty cells)
+GAToRS Positive,gators_12,gators_14,0.26759884954465024,100,ok (10/35 empty cells)
+GAToRS Positive,gators_12,gators_15,0.5457864864542872,100,ok (11/30 empty cells)
+GAToRS Positive,gators_13,gators_14,0.4612295335575219,100,ok (22/49 empty cells)
+GAToRS Positive,gators_13,gators_15,0.4639390639242503,100,ok (20/42 empty cells)
+GAToRS Positive,gators_14,gators_15,0.14151372529866618,100,ok (13/42 empty cells)
+GAToRS Positive,gators_1,gators_1,1.0,100,diagonal
+GAToRS Positive,gators_2,gators_2,1.0,100,diagonal
+GAToRS Positive,gators_3,gators_3,1.0,100,diagonal
+GAToRS Positive,gators_4,gators_4,1.0,100,diagonal
+GAToRS Positive,gators_5,gators_5,1.0,100,diagonal
+GAToRS Positive,gators_11,gators_11,1.0,100,diagonal
+GAToRS Positive,gators_12,gators_12,1.0,100,diagonal
+GAToRS Positive,gators_13,gators_13,1.0,100,diagonal
+GAToRS Positive,gators_14,gators_14,1.0,100,diagonal
+GAToRS Positive,gators_15,gators_15,1.0,100,diagonal
+GAToRS Negative,gators_6,gators_7,0.21160715318611048,100,ok (10/42 empty cells)
+GAToRS Negative,gators_6,gators_8,0.41847686139219303,100,ok (11/42 empty cells)
+GAToRS Negative,gators_6,gators_9,0.5039119203837767,100,ok (7/36 empty cells)
+GAToRS Negative,gators_6,gators_10,0.3926482229696697,100,ok (6/42 empty cells)
+GAToRS Negative,gators_6,gators_16,0.4526716061903019,100,ok (13/42 empty cells)
+GAToRS Negative,gators_6,gators_17,0.26238858385352753,100,ok (7/36 empty cells)
+GAToRS Negative,gators_6,gators_18,0.4262370940877739,100,ok (11/42 empty cells)
+GAToRS Negative,gators_6,gators_19,0.1474224397541844,100,ok (8/30 empty cells)
+GAToRS Negative,gators_6,gators_20,-0.041342239448925136,100,ok (6/30 empty cells)
+GAToRS Negative,gators_7,gators_8,0.4685351431004165,100,ok (18/49 empty cells)
+GAToRS Negative,gators_7,gators_9,0.4461664333965699,100,ok (11/42 empty cells)
+GAToRS Negative,gators_7,gators_10,0.28882976890661116,100,ok (13/49 empty cells)
+GAToRS Negative,gators_7,gators_16,0.34916112577448294,100,ok (19/49 empty cells)
+GAToRS Negative,gators_7,gators_17,0.26915799123399975,100,ok (16/42 empty cells)
+GAToRS Negative,gators_7,gators_18,0.34035085308847884,100,ok (16/49 empty cells)
+GAToRS Negative,gators_7,gators_19,0.1384682226200061,100,ok (12/35 empty cells)
+GAToRS Negative,gators_7,gators_20,0.06817790789151437,100,ok (10/35 empty cells)
+GAToRS Negative,gators_8,gators_9,0.7243888326115441,100,ok (16/42 empty cells)
+GAToRS Negative,gators_8,gators_10,0.444878776771301,100,ok (17/49 empty cells)
+GAToRS Negative,gators_8,gators_16,0.3667519295521586,100,ok (17/49 empty cells)
+GAToRS Negative,gators_8,gators_17,0.27578478334242296,100,ok (16/42 empty cells)
+GAToRS Negative,gators_8,gators_18,0.4961258776101065,100,ok (21/49 empty cells)
+GAToRS Negative,gators_8,gators_19,0.2209298580798192,100,ok (12/35 empty cells)
+GAToRS Negative,gators_8,gators_20,0.09920109784063237,100,ok (10/35 empty cells)
+GAToRS Negative,gators_9,gators_10,0.3929149202174021,100,ok (11/42 empty cells)
+GAToRS Negative,gators_9,gators_16,0.4342974467994993,100,ok (13/42 empty cells)
+GAToRS Negative,gators_9,gators_17,0.2909440698868368,100,ok (11/36 empty cells)
+GAToRS Negative,gators_9,gators_18,0.49290660218752574,100,ok (13/42 empty cells)
+GAToRS Negative,gators_9,gators_19,0.1434358493478374,100,ok (9/30 empty cells)
+GAToRS Negative,gators_9,gators_20,0.16455787837140884,100,ok (6/30 empty cells)
+GAToRS Negative,gators_10,gators_16,0.3046182912156069,100,ok (15/49 empty cells)
+GAToRS Negative,gators_10,gators_17,0.27795746781956204,100,ok (15/42 empty cells)
+GAToRS Negative,gators_10,gators_18,0.3051308192449674,100,ok (12/49 empty cells)
+GAToRS Negative,gators_10,gators_19,-0.019920086546129156,100,ok (10/35 empty cells)
+GAToRS Negative,gators_10,gators_20,0.10740738944556713,100,ok (8/35 empty cells)
+GAToRS Negative,gators_16,gators_17,0.363015215258575,100,ok (14/42 empty cells)
+GAToRS Negative,gators_16,gators_18,0.35366298019827985,100,ok (18/49 empty cells)
+GAToRS Negative,gators_16,gators_19,0.21073689980423643,100,ok (12/35 empty cells)
+GAToRS Negative,gators_16,gators_20,0.15593942752325643,100,ok (10/35 empty cells)
+GAToRS Negative,gators_17,gators_18,0.3604116283458491,100,ok (14/42 empty cells)
+GAToRS Negative,gators_17,gators_19,0.26037665764776574,100,ok (9/30 empty cells)
+GAToRS Negative,gators_17,gators_20,0.240414883499685,100,ok (9/30 empty cells)
+GAToRS Negative,gators_18,gators_19,0.25812353044983444,100,ok (11/35 empty cells)
+GAToRS Negative,gators_18,gators_20,0.09657220290879873,100,ok (9/35 empty cells)
+GAToRS Negative,gators_19,gators_20,0.5113143126798071,100,ok (9/25 empty cells)
+GAToRS Negative,gators_6,gators_6,1.0,100,diagonal
+GAToRS Negative,gators_7,gators_7,1.0,100,diagonal
+GAToRS Negative,gators_8,gators_8,1.0,100,diagonal
+GAToRS Negative,gators_9,gators_9,1.0,100,diagonal
+GAToRS Negative,gators_10,gators_10,1.0,100,diagonal
+GAToRS Negative,gators_16,gators_16,1.0,100,diagonal
+GAToRS Negative,gators_17,gators_17,1.0,100,diagonal
+GAToRS Negative,gators_18,gators_18,1.0,100,diagonal
+GAToRS Negative,gators_19,gators_19,1.0,100,diagonal
+GAToRS Negative,gators_20,gators_20,1.0,100,diagonal

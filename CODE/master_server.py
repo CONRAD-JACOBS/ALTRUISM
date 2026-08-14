@@ -31,7 +31,7 @@ VOICE_CHAT_ARTIFACTS = (
 )
 
 TEST_AUTO_FILL = True
-TEST_BYPASS_ROBOT_COMMANDS = False
+TEST_BYPASS_ROBOT_COMMANDS = True
 EMERGENCY_BYPASS_PRE_CONVERSATION = False
 # In robot stage:
 # Press Enter to stop the alert sound. Press Ctrl+Enter to advance manually.
