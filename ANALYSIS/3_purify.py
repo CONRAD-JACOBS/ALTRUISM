@@ -46,9 +46,9 @@ LIKE_COL = "q_post_specific_likeability"
 MENT_COL = "q_post_specific_mentism"
 PREDICTORS = ["like_c", "mentism_c", "like_x_mentism"]
 PREDICTOR_LABELS = {
-    "like_c": "LIKING",
-    "mentism_c": "MENTISM",
-    "like_x_mentism": "LIKINGxMENTISM",
+    "like_c": "Liking",
+    "mentism_c": "Robomentism",
+    "like_x_mentism": "Liking x Robomentism",
 }
 COOK_TERMS = ["Intercept"] + PREDICTORS
 
@@ -141,9 +141,9 @@ def _plot_predictor(influence_df, predictor, threshold, out_path):
         edgecolors="white",
         linewidths=0.6,
     )
-    plt.xlabel("Participant number")
+    plt.xlabel("Participant Number")
     plt.ylabel("Leave-one-out DFBETAS")
-    plt.title("{} influence on primary NB beta".format(label))
+    plt.title("{} Onfluence on Primary NB beta".format(label))
     plt.tight_layout()
     plt.savefig(out_path, dpi=180)
     plt.close()
@@ -193,9 +193,9 @@ def _plot_dfbetas_vs_cooks(influence_df, cooks_threshold, out_path):
             xytext=(4, 4),
             fontsize=8,
         )
-    plt.xlabel("Max absolute DFBETAS across primary predictors")
-    plt.ylabel("Cook-style distance")
-    plt.title("DFBETAS vs Cook-style influence")
+    plt.xlabel("Maximum Absolute DFBETAS across Primary Predictors")
+    plt.ylabel("Cook-style Distance")
+    plt.title("DFBETAS vs Cook-style Influence")
     plt.tight_layout()
     plt.savefig(out_path, dpi=180)
     plt.close()
@@ -214,9 +214,9 @@ def _plot_combined(influence_df, thresholds, out_path):
             label=PREDICTOR_LABELS[predictor],
         )
         plt.axhline(thresholds[predictor], linestyle="--", linewidth=0.9, alpha=0.45)
-    plt.xlabel("Participant number")
-    plt.ylabel("Absolute leave-one-out DFBETAS")
-    plt.title("Primary NB leave-one-out influence")
+    plt.xlabel("Participant Number")
+    plt.ylabel("Absolute Leave-one-out DFBETAS")
+    plt.title("Primary Negative Binomial Leave-one-out Influence")
     plt.legend()
     plt.tight_layout()
     plt.savefig(out_path, dpi=180)

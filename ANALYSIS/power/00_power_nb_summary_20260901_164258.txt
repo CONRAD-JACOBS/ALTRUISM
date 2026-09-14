@@ -1,0 +1,36 @@
+NEGATIVE BINOMIAL POWER SIMULATION SUMMARY
+timestamp: 20260901_164258
+N_values: [50, 70, 90, 110, 130, 150, 200, 250, 300]
+nsim: 10
+alpha: 0.05
+rho_like_ment: 0.3
+NB intercept b0_nb: 2.6
+NB dispersion alpha_nb: 0.8
+betas (LIKE, MENT, INT): 0.4, 0.35, 0.2
+
+Outcome summaries by N:
+     mean_completed  median_completed  mean_mu_true
+N                                                  
+50        17.812000              9.55     18.940211
+70        19.037143             10.35     18.502166
+90        19.128889             10.05     19.109879
+110       18.855455              9.90     19.168028
+130       19.603846             10.30     19.191939
+150       19.202000              9.30     18.251405
+200       18.959500              9.60     18.586612
+250       18.110400              9.50     18.464934
+300       19.114000              9.55     18.858852
+
+Power table (NB):
+     power_nb                                 
+term   Liking Liking x Robomentism Robomentism
+N                                             
+50        0.9                  0.3         0.7
+70        0.9                  0.5         0.9
+90        1.0                  0.6         0.7
+110       1.0                  0.8         1.0
+130       1.0                  0.8         1.0
+150       1.0                  0.7         1.0
+200       1.0                  0.9         1.0
+250       1.0                  0.8         1.0
+300       1.0                  1.0         1.0

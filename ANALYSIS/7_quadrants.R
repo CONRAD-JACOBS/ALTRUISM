@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-# Model-predicted "quadrants" for the liking x mentism interaction.
+# Model-predicted "quadrants" for the Liking x Robomentism interaction.
 #
 # This retains both predictors as continuous variables. "Low" and "high" are
 # evaluation points at one sample SD below and above each centered mean; they
@@ -76,24 +76,27 @@ pairwise_contrasts <- function(cell_result) {
 }
 
 plot_predicted_cells <- function(cells, path, dataset_label) {
-  cols <- c("Low mentism (-1 SD)" = "#2F5D8A", "High mentism (+1 SD)" = "#B24A2A")
-  pch_values <- c("Low mentism (-1 SD)" = 16, "High mentism (+1 SD)" = 17)
+  cols <- c("Low Robomentism (-1 SD)" = "#2F5D8A", "High Robomentism (+1 SD)" = "#B24A2A")
+  pch_values <- c("Low Robomentism (-1 SD)" = 16, "High Robomentism (+1 SD)" = 17)
   ylim <- range(c(0, cells$asymptotic_LCL, cells$asymptotic_UCL), finite = TRUE)
 
   png(path, width = 1800, height = 1250, res = 220)
   par(mar = c(5, 5, 4, 2) + 0.1)
   plot(
     NA, xlim = c(0.8, 2.2), ylim = ylim, xaxt = "n",
-    xlab = "Liking evaluation point", ylab = "Predicted post-task completions",
-    main = paste("Model-predicted liking x mentism cells:", dataset_label),
+    xlab = "Liking evaluation point", ylab = "Predicted Voluntary reCAPTCHA Solutions",
     bty = "l"
   )
-  axis(1, at = 1:2, labels = c("Low liking\n(-1 SD)", "High liking\n(+1 SD)"))
+  axis(1, at = 1:2, labels = FALSE)
+  mtext(
+    c("Low Liking\n(-1 SD)", "High Liking\n(+1 SD)"),
+    side = 1, at = 1:2, line = 2
+  )
   grid(nx = NA, ny = NULL, col = "#E5E5E5")
 
   for (level in names(cols)) {
-    d <- cells[cells$mentism_level == level, ]
-    x <- match(d$liking_level, c("Low liking (-1 SD)", "High liking (+1 SD)"))
+    d <- cells[cells$Robomentism_level == level, ]
+    x <- match(d$Liking_level, c("Low Liking (-1 SD)", "High Liking (+1 SD)"))
     lines(x, d$predicted_completions, col = cols[level], lwd = 2)
     arrows(
       x, d$asymptotic_LCL, x, d$asymptotic_UCL,
@@ -105,10 +108,10 @@ plot_predicted_cells <- function(cells, path, dataset_label) {
     )
   }
   legend(
-    "topleft", legend = names(cols), col = cols, pch = pch_values,
+    "bottomright", legend = names(cols), col = cols, pch = pch_values,
     lty = 1, lwd = 2, bty = "n"
   )
-  mtext("Points are NB-model expected counts; bars are asymptotic 95% CIs.", side = 1, line = 4, cex = 0.8)
+
   dev.off()
 }
 
@@ -117,9 +120,9 @@ plot_contrasts <- function(contrasts, path, dataset_label) {
   y <- seq_len(nrow(d))
   point_cols <- ifelse(d$holm_significant_05, "#B24A2A", "#2F5D8A")
   short_cell <- function(x) {
-    liking <- ifelse(grepl("^Low liking", x), "L", "H")
-    mentism <- ifelse(grepl(" / Low mentism", x), "L", "H")
-    paste0(liking, mentism)
+    Liking <- ifelse(grepl("^Low Liking", x), "L", "H")
+    Robomentism <- ifelse(grepl(" / Low Robomentism", x), "L", "H")
+    paste0(Liking, Robomentism)
   }
   short_labels <- paste(
     short_cell(d$numerator), "-", short_cell(d$denominator)
@@ -143,7 +146,7 @@ plot_contrasts <- function(contrasts, path, dataset_label) {
     col = c("#B24A2A", "#2F5D8A"), pch = 16, bty = "n"
   )
   mtext(
-    "LL = low liking/low mentism; HL = high/low; LH = low/high; HH = high/high.",
+    "LL = low Liking/low Robomentism; HL = high/low; LH = low/high; HH = high/high.",
     side = 1, line = 4, cex = 0.78
   )
   mtext(
@@ -169,28 +172,28 @@ run_quadrants <- function(csv_path, dataset_label) {
   like_mean <- mean(dat[[LIKE_COL]])
   ment_mean <- mean(dat[[MENT_COL]])
   dat$like_c <- dat[[LIKE_COL]] - like_mean
-  dat$mentism_c <- dat[[MENT_COL]] - ment_mean
+  dat$Robomentism_c <- dat[[MENT_COL]] - ment_mean
   like_sd <- sd(dat$like_c)
-  mentism_sd <- sd(dat$mentism_c)
-  if (!is.finite(like_sd) || like_sd == 0 || !is.finite(mentism_sd) || mentism_sd == 0) {
-    stop("Liking and mentism must both have non-zero finite SDs.")
+  Robomentism_sd <- sd(dat$Robomentism_c)
+  if (!is.finite(like_sd) || like_sd == 0 || !is.finite(Robomentism_sd) || Robomentism_sd == 0) {
+    stop("Liking and Robomentism must both have non-zero finite SDs.")
   }
 
   fit <- glm.nb(
-    captcha_post_completions ~ like_c * mentism_c,
+    captcha_post_completions ~ like_c * Robomentism_c,
     data = dat
   )
 
   grid <- expand.grid(
     like_c = c(-like_sd, like_sd),
-    mentism_c = c(-mentism_sd, mentism_sd),
+    Robomentism_c = c(-Robomentism_sd, Robomentism_sd),
     KEEP.OUT.ATTRS = FALSE
   )
-  grid$liking_level <- ifelse(grid$like_c < 0, "Low liking (-1 SD)", "High liking (+1 SD)")
-  grid$mentism_level <- ifelse(grid$mentism_c < 0, "Low mentism (-1 SD)", "High mentism (+1 SD)")
-  grid$cell <- paste(grid$liking_level, grid$mentism_level, sep = " / ")
-  grid$liking_raw_value <- grid$like_c + like_mean
-  grid$mentism_raw_value <- grid$mentism_c + ment_mean
+  grid$Liking_level <- ifelse(grid$like_c < 0, "Low Liking (-1 SD)", "High Liking (+1 SD)")
+  grid$Robomentism_level <- ifelse(grid$Robomentism_c < 0, "Low Robomentism (-1 SD)", "High Robomentism (+1 SD)")
+  grid$cell <- paste(grid$Liking_level, grid$Robomentism_level, sep = " / ")
+  grid$Liking_raw_value <- grid$like_c + like_mean
+  grid$Robomentism_raw_value <- grid$Robomentism_c + ment_mean
 
   cell_result <- model_cells(fit, grid)
   cells <- cell_result$cells
@@ -210,16 +213,16 @@ run_quadrants <- function(csv_path, dataset_label) {
 
   capture.output(
     cat(
-      "Model-predicted liking x mentism cells\n",
+      "Model-predicted Liking x Robomentism cells\n",
       "dataset: ", dataset_label, "\n",
       "data: ", normalizePath(csv_path, winslash = "/"), "\n",
       "rows used: ", nrow(dat), "\n",
-      "model: captcha_post_completions ~ like_c * mentism_c\n",
+      "model: captcha_post_completions ~ like_c * Robomentism_c\n",
       "negative-binomial parameterization: MASS::glm.nb (log link)\n",
-      "liking mean: ", like_mean, "\n",
-      "liking SD: ", like_sd, "\n",
-      "mentism mean: ", ment_mean, "\n",
-      "mentism SD: ", mentism_sd, "\n",
+      "Liking mean: ", like_mean, "\n",
+      "Liking SD: ", like_sd, "\n",
+      "Robomentism mean: ", ment_mean, "\n",
+      "Robomentism SD: ", Robomentism_sd, "\n",
       "theta: ", fit$theta, "\n\n",
       sep = ""
     ),

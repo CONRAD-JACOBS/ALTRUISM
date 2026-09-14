@@ -31,13 +31,12 @@ def safe_numeric(series: pd.Series) -> pd.Series:
     return pd.to_numeric(series, errors="coerce")
 
 
-def save_hist(series: pd.Series, title: str, xlabel: str, outpath: Path, bins=30):
+def save_hist(series: pd.Series, xlabel: str, outpath: Path, bins=30):
     s = series.dropna()
     plt.figure()
     plt.hist(s, bins=bins)
-    plt.title(title)
     plt.xlabel(xlabel)
-    plt.ylabel("Count")
+    plt.ylabel("Participant Count")
     plt.tight_layout()
     plt.savefig(outpath, dpi=150)
     plt.close()
@@ -218,8 +217,8 @@ def main():
     # 1) distribution of completions (with zeros)
     save_hist(
         completions,
-        title=f"Distribution: {COMPLETIONS_COL}",
-        xlabel=COMPLETIONS_COL,
+        #title=f"Distribution: {COMPLETIONS_COL}",
+        xlabel="Voluntary reCAPTCHA Solutions",
         outpath=OUTDIR / "dist_completions.png",
         bins=30
     )
@@ -227,8 +226,8 @@ def main():
     # 2) distribution of time (including structural zeros / idle)
     save_hist(
         time_sec,
-        title=f"Distribution: {TIME_COL}",
-        xlabel=TIME_COL,
+        #title=f"Distribution: {TIME_COL}",
+        xlabel="Seconds Spent on Voluntary reCAPTCHA Task",
         outpath=OUTDIR / "dist_time.png",
         bins=30
     )

@@ -440,15 +440,21 @@ def _binned_interaction_summary(dat):
 
 def _plot_quadrant_means(summary, out_path):
     d = summary.sort_values("mean_completions", ascending=True)
-    colors = np.where(d["quadrant"].eq("high_liking__low_mentism"), "#b24a2a", "#2f5d8a")
-    labels = [q.replace("__", "\n").replace("_", " ") for q in d["quadrant"]]
+    colors = "#2f5d8a"
+    labels = [
+        q.replace("__", "\n")
+        .replace("_", " ")
+        .replace("liking", "Liking")
+        .replace("mentism", "Robomentism")
+        for q in d["quadrant"]
+    ]
 
     plt.figure(figsize=(7.4, 4.8))
     plt.barh(labels, d["mean_completions"], color=colors)
     for i, (_, row) in enumerate(d.iterrows()):
         plt.text(row["mean_completions"], i, "  n={}".format(int(row["n"])), va="center", fontsize=9)
-    plt.xlabel("Mean post-task completions")
-    plt.title("Binned means by liking/mentism quadrant")
+    plt.xlabel("Mean Voluntary reCAPTCHA Solutions")
+    #plt.title("Binned means by liking/mentism quadrant")
     plt.tight_layout()
     plt.savefig(out_path, dpi=180)
     plt.close()

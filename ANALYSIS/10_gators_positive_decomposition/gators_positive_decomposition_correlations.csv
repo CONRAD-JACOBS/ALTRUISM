@@ -1,0 +1,8 @@
+variable_1,variable_2,n,pearson_r,spearman_rho
+gators_personal_positive,gators_societal_positive,100,0.22345127122597755,0.24943496755238345
+gators_personal_positive,captcha_post_completions,100,0.058086858914109675,0.03396117654000379
+gators_societal_positive,captcha_post_completions,100,0.07107833013289913,-0.0023647373908511843
+gators_personal_positive,q_post_specific_likeability,100,0.3556982788737434,0.373330723086965
+gators_societal_positive,q_post_specific_likeability,100,0.09611387952451436,0.11895336204052512
+gators_personal_positive,q_post_specific_mentism,100,0.32776142433526384,0.2796278330942837
+gators_societal_positive,q_post_specific_mentism,100,-0.0013045566869841056,-0.0031665525025560354

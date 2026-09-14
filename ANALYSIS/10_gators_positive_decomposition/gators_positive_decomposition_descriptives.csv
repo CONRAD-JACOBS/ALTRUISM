@@ -1,0 +1,3 @@
+subscale,n,mean,SD,median,minimum,maximum,between_subscale_pearson_r,between_subscale_spearman_rho
+Personal Positive (S1; items 1-5),100,4.102,0.8964554217764111,4.2,1.6,6.2,0.22345127122597755,0.24943496755238345
+Societal Positive (S3; items 11-15),100,5.062,0.8455205795869493,5.0,3.0,7.0,0.22345127122597755,0.24943496755238345
