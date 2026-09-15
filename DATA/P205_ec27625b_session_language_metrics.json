@@ -1,0 +1,15 @@
+{
+  "spoken_turn_count": 23, 
+  "mean_words_per_turn": 16.347826086956523, 
+  "total_words": 376, 
+  "updated_at": "2026-09-14T10:23:18", 
+  "total_speaking_time_sec": 165.34050000000002, 
+  "mean_latency_sec": 9.093695652173913, 
+  "latency_turn_count": 23, 
+  "robot_total_words": 908, 
+  "word_rate_wps": 2.2740949737057767, 
+  "robot_word_rate_wps": 2.4870930612203095, 
+  "robot_spoken_turn_count": 23, 
+  "robot_total_speaking_time_sec": 365.0848511291666, 
+  "robot_mean_words_per_turn": 39.47826086956522
+}
