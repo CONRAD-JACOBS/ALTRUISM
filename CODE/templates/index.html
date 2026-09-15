@@ -21,8 +21,8 @@
       Whenever you Want, Save &amp; Exit
     </button>
 
-    <button id="competition-info-trigger" class="competition-info-trigger competition-info-trigger--wide" type="button" onclick="openCompetitionInfoModal(); return false;">
-      About the Competition
+    <button id="competition-info-trigger" class="competition-info-trigger{% if not post_hoc_control %} competition-info-trigger--wide{% endif %}" type="button" onclick="openCompetitionInfoModal(); return false;">
+      {% if post_hoc_control %}Instructions{% else %}About the Competition{% endif %}
     </button>
 
   {% endif %}
@@ -49,6 +49,7 @@
         <div class="prompt" id="prompt"
           data-robot="{{ robot_name|default('') }}"
           data-stage="{{ stage_id|default('') }}"
+          data-post-hoc-control="{{ 'true' if post_hoc_control else 'false' }}"
           data-feedback-mode="{{ captcha_feedback_mode|default('original') }}"
           data-feedback-wrong-ms="{{ captcha_feedback_wrong_ms|default(1000) }}"
           data-stage-enter-ts="{{ stage_enter_ts|default('') }}"
@@ -77,7 +78,7 @@
   </div>
   {% if stage_id == "captcha_post" %}
     <div class="post-task-note">
-      You may complete <span style="font-weight: bold; color: #ffb020">as many tasks as you want</span> to increase Zeke's total.<br><br>
+      You may complete <span style="font-weight: bold; color: #ffb020">as many tasks as you want</span>{% if not post_hoc_control %} to increase Zeke's total{% endif %}.<br><br>
       At any time you may click Save &amp; Exit to finish.
     </div>
   {% endif %}
@@ -92,7 +93,7 @@
       <div class="competition-info-modal__card">
         <div class="competition-info-modal__header">
           <h3 id="competition-info-title">
-            {% if stage_id == "captcha_pre" %}
+            {% if stage_id == "captcha_pre" or post_hoc_control %}
               Instructions
             {% else %}
               Competition Information
@@ -101,7 +102,7 @@
           <button id="competition-info-close" class="competition-info-modal__close" type="button" aria-label="Close" onclick="closeCompetitionInfoModal(); return false;">Close</button>
         </div>
         <div class="competition-info-modal__body">
-          {% if stage_id == "captcha_pre" %}
+          {% if stage_id == "captcha_pre" or post_hoc_control %}
             {% include "_captcha_pre_instructions_body.html" %}
           {% else %}
             {% include "_captcha_post_instructions_body.html" %}

@@ -30,8 +30,11 @@ VOICE_CHAT_ARTIFACTS = (
     "session_language_metrics.json",
 )
 
-TEST_AUTO_FILL = True
-TEST_BYPASS_ROBOT_COMMANDS = True
+# Set True for the post hoc control; restart the master and robot stack after changing.
+POST_HOC_CONTROL = True
+
+TEST_AUTO_FILL = False
+TEST_BYPASS_ROBOT_COMMANDS = False
 EMERGENCY_BYPASS_PRE_CONVERSATION = False
 # In robot stage:
 # Press Enter to stop the alert sound. Press Ctrl+Enter to advance manually.
@@ -83,6 +86,8 @@ def launch_robot_stack():
     # Other experiments can keep operator-gated speech in active_project.txt.
     altruism_env = (
         "UQ_PROJECT_ID=altruism "
+        "ALTRUISM_POST_HOC_CONTROL={} ".format(int(POST_HOC_CONTROL))
+        +
         "NAO_REQUIRE_ENTER_BEFORE_SPEAK=0 "
         "NAO_REQUIRE_ENTER_FOR_WATCHDOG=0 "
         "NAO_OPERATOR_REPLY_DELAY_ENABLED=0 "
@@ -1030,6 +1035,7 @@ register_captcha_routes(
 register_captcha_routes(
     app,
     stage_id="captcha_post",
+    post_hoc_control=POST_HOC_CONTROL,
     targets_dir=BASE / "local_captcha" / "stimuli" / "TARGETS",
     distractors_dir=BASE / "local_captcha" / "stimuli" / "DISTRACTORS",
     config_path=BASE / "local_captcha" / "configs" / "post_config.json",

@@ -25,7 +25,7 @@ const API = STAGE ? `/api/${STAGE}` : `/api`;
 const IMG = STAGE ? `/img/${STAGE}` : `/img`;
 const SHOULD_AUTO_SCROLL_BOTTOM = STAGE === "captcha_pre" || STAGE === "captcha_post";
 const COMPLETED_LABEL =
-  STAGE === "captcha_post"
+  STAGE === "captcha_post" && promptEl?.dataset?.postHocControl !== "true"
     ? "You have boosted Zeke's total by"
     : "Completed in this Session";
 let inFeedbackTransition = false;

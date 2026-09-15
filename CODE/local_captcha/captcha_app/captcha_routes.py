@@ -68,7 +68,7 @@ def load_cfg(config_path: Path):
 
 def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, config_path,
                            start_mode="instructions", next_url="/done",
-                           get_or_create_exp=None, EXP_SESSIONS=None):
+                           get_or_create_exp=None, EXP_SESSIONS=None, post_hoc_control=False):
 
     """
     Registers a CAPTCHA stage into an existing Flask app.
@@ -303,7 +303,8 @@ def register_captcha_routes(app, *, stage_id, targets_dir, distractors_dir, conf
             captcha_feedback_mode=CFG["captcha_feedback_mode"],
             captcha_feedback_right_ms=CFG["captcha_feedback_right_ms"],
             captcha_feedback_wrong_ms=CFG["captcha_feedback_wrong_ms"],
-            show_competition_scoreboard=CFG["show_competition_scoreboard"],
+            post_hoc_control=post_hoc_control,
+            show_competition_scoreboard=CFG["show_competition_scoreboard"] and not post_hoc_control,
             competition_scores=CFG["competition_scores"],
             startup_warning=startup_warning,
         )

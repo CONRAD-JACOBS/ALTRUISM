@@ -1,5 +1,9 @@
 <p>
+  {% if post_hoc_control %}
+  Doing more visual recognition tasks is entirely optional. You may click Save &amp; Exit to quit at any time.
+  {% else %}
   To advance to the next part of the experiment you must successfully complete 10 visual recognition tasks.
+  {% endif %}
 </p>
 
 <p>
@@ -19,5 +23,9 @@
 </p>
 
 <p>
+  {% if post_hoc_control %}
+  You may complete as many tasks as you want. At any time you may click Save &amp; Exit to finish.
+  {% else %}
   Your score must reach 10 before you can advance to the next part of the experiment.
+  {% endif %}
 </p>
