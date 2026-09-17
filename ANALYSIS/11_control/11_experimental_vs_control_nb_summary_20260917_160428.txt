@@ -1,0 +1,27 @@
+Experimental/competition versus no-competition control analysis
+Data: /Users/neurorobots/Desktop/repos/ALTRUISM/ANALYSIS/3_purified.csv
+Model formula: captcha_post_completions ~ condition
+Negative-binomial model: MASS::glm.nb with log link
+Reference category: control
+
+Condition descriptives
+    condition   N  mean        SD median minimum maximum zero_N zero_percent
+      control  20  5.30  6.122435    4.5       0      21      6           30
+ experimental 100 17.65 24.164159   11.0       0     128      2            2
+
+Model coefficients
+                  term estimate standard_error       z      p_value
+           (Intercept) 1.667707      0.2408634 6.92387 4.394707e-12
+ conditionexperimental 1.203029      0.2613389 4.60333 4.157889e-06
+
+Estimated theta/dispersion: 1.029204 (SE = 0.1364683)
+Experimental versus control IRR: 3.330189 (95% CI 1.99534 to 5.55803)
+Raw arithmetic mean difference (experimental - control): 12.35 completions
+
+Model-estimated expected completion counts
+    condition expected_count    CI_low   CI_high
+      control           5.30  3.305617  8.497657
+ experimental          17.65 14.468692 21.530799
+
+Plain-language summary
+Experimental N = 100; control N = 20. Observed mean completions were 17.65 in the experimental condition and 5.30 in the control condition. The experimental-versus-control IRR was 3.330 (95% CI 1.995 to 5.558), p < .001, theta = 1.029. The experimental condition was associated with a higher estimated rate of voluntary reCAPTCHA completion than the no-competition control condition; the 95% CI for the IRR excluded 1.

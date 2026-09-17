@@ -1,6 +1,6 @@
 Zero-order Pearson correlations
-input: C:\Users\SNL1\Desktop\repos\ALTRUISM\ANALYSIS\3_purified.csv
-rows_in_input: 100
+input: /Users/neurorobots/Desktop/repos/ALTRUISM/ANALYSIS/3_purified.csv
+rows_in_input: 120
 variables (raw column -> display heading):
 - q_post_specific_mentism -> Robomentism
 - q_post_specific_likeability -> Likeability
@@ -11,11 +11,11 @@ variables (raw column -> display heading):
 - q_pre_captcha_difficulty -> reCAPTCHA Difficulty
 
 Lower-triangle publication table
-               Variable      1     2    3      4    5    6 7
-         1. Robomentism      —                              
-         2. Likeability .38***     —                        
-                3. IDAQ .37***   .17    —                   
-     4. GAToRS positive   .21* .29**  .06      —            
-     5. GAToRS negative   -.12  -.19 -.02 -.29**    —       
-       6. reCATPCHA Fun  .28**   .16  .02    .03 -.11    —  
-7. reCAPTCHA Difficulty   -.02  -.14  .02   -.05  .06 -.01 —
+               Variable      1     2   3       4    5   6 7
+         1. Robomentism      —                             
+         2. Likeability .34***     —                       
+                3. IDAQ .36***   .17   —                   
+     4. GAToRS positive   .22* .27** .01       —           
+     5. GAToRS negative   -.10 -.18* .07 -.36***    —      
+       6. reCATPCHA Fun   .22*  .19* .03     .02 -.11   —  
+7. reCAPTCHA Difficulty    .01  -.10 .03    -.06  .06 .02 —
